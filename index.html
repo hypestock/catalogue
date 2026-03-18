@@ -518,11 +518,12 @@ async function sbDeleteProduct(id){
 // ─── STATE ────────────────────────────────────────────────
 var ADMIN_PASS='admin123';
 var products=[];
-var brands=["Nike","Adidas","Zara","H&M","Pull&Bear"];
+var brands=[];
 var globalTags=[];
 var subcats=[];
 var clients=[];
 var accessLogs=[];
+var _appReady=false; // guard: don't saveConfig before initApp loads data
 
 var editingId=null,editingClientId=null;
 var tempSizes=[],tempImgs=[],tempTagIds=[];
@@ -554,12 +555,14 @@ async function initApp(){
       if(cfg.accessLogs)accessLogs=cfg.accessLogs;
     }
     products=await sbGetAllProducts();
+    _appReady=true;
   }catch(e){showToast('Connection error — check your internet',true);}
   document.getElementById('loading-screen').classList.remove('show');
   document.getElementById('login-screen').style.display='flex';
 }
 
 async function saveConfig(){
+  if(!_appReady)return; // never overwrite cloud data before we've loaded it
   await sbSet('app_config','settings',{adminPass:ADMIN_PASS,brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});
 }
 
