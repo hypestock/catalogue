@@ -177,6 +177,68 @@ td{padding:10px 12px;vertical-align:middle}
 @media(max-width:720px){.sidebar{display:none}.sidebar.mobile-open{display:flex;position:fixed;top:54px;left:0;height:calc(100vh - 54px);z-index:40;width:260px}.mobile-filter-btn{display:flex !important}.detail-main-img{height:220px}}
 .mobile-filter-btn{display:none}
 @media(max-width:520px){.mrow-2{grid-template-columns:1fr}}
+
+/* ── MOBILE OPTIMIZATIONS ───────────────────────────────── */
+@media(max-width:600px){
+  /* 2 products per row */
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-top:1rem;padding:0}
+  .content{padding:10px 10px 80px}
+
+  /* Compact card */
+  .pcard-body{padding:8px 10px}
+  .pcard-cat{font-size:10px;margin-bottom:2px}
+  .pcard-nome{font-size:12px;margin-bottom:2px;line-height:1.25}
+  .pcard-preco{font-size:13px;margin-bottom:3px}
+  .pcard-cor{font-size:10px;margin-bottom:4px}
+  .pcard-desc{display:none}
+  .pcard-tags{gap:3px;margin-bottom:5px}
+  .ptag{font-size:9px;padding:1px 6px}
+  .sizes-row{gap:3px;margin-bottom:6px}
+  .size-tag{font-size:10px;padding:1px 5px}
+  .esgotado-badge{font-size:9px;padding:2px 6px;top:5px;right:5px}
+  .pcard-actions{padding:0 8px 8px;gap:4px}
+  .pcard-actions .btn{font-size:11px;padding:4px 7px}
+
+  /* Topnav */
+  .topnav{padding:0 12px;height:50px}
+  .nav-brand{font-size:14px}
+  .role-tag{display:none}
+  .nav-right{gap:6px}
+
+  /* Filters slide-up panel */
+  .sidebar.mobile-open{width:100%;border-radius:16px 16px 0 0;top:auto;bottom:0;height:75vh;padding:1rem}
+
+  /* Tabs */
+  .tabs{gap:3px}
+  .tab{padding:5px 12px;font-size:12px}
+
+  /* Content topbar */
+  .content-topbar{margin-bottom:.75rem}
+  .content-topbar .btn{font-size:12px;padding:6px 12px}
+
+  /* Modal full screen */
+  .modal-overlay{padding:.5rem .5rem 0}
+  .modal{max-height:95vh;overflow-y:auto;border-radius:var(--radius) var(--radius) 0 0;padding:1.25rem 1rem}
+
+  /* Detail modal */
+  .detail-modal{border-radius:16px 16px 0 0}
+  .detail-main-img{height:260px}
+  .detail-body{padding:1rem}
+  #detail-nome{font-size:18px}
+  #detail-preco{font-size:18px}
+
+  /* List view — hide some columns on mobile */
+  .list-wrap table th:nth-child(4),
+  .list-wrap table td:nth-child(4),
+  .list-wrap table th:nth-child(6),
+  .list-wrap table td:nth-child(6){display:none}
+
+  /* Image arrows always visible on mobile (no hover) */
+  .img-arrow{opacity:.7}
+
+  /* Bigger touch targets for dots */
+  .img-dot{width:7px;height:7px}
+}
 </style>
 </head>
 <body>
@@ -203,7 +265,7 @@ td{padding:10px 12px;vertical-align:middle}
 <div id="app">
   <nav class="topnav">
     <div style="display:flex;align-items:center;gap:10px">
-      <button class="btn sm mobile-filter-btn" onclick="toggleMobileSidebar()">Filters</button>
+      <button class="btn sm mobile-filter-btn" onclick="toggleMobileSidebar()">⚡ Filters</button>
       <div class="nav-brand">Catalogue</div>
     </div>
     <div class="nav-right">
