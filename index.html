@@ -59,8 +59,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn:hover{background:var(--surface2)}
 .btn.dark{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .btn.dark:hover{opacity:.82}
-.btn.danger{color:var(--red);border-color:var(--border)}
-.btn.danger:hover{background:var(--red-bg)}
+.btn.danger{color:var(--red);border-color:rgba(220,38,38,.25);background:rgba(220,38,38,.07)}
+.btn.danger:hover{background:var(--red-bg);border-color:rgba(220,38,38,.4)}
+.btn.dup{color:#2563eb;border-color:rgba(37,99,235,.25);background:rgba(37,99,235,.07)}
+.btn.dup:hover{background:rgba(37,99,235,.13);border-color:rgba(37,99,235,.4)}
 .btn.sm{padding:5px 10px;font-size:12px}
 .tabs{display:flex;gap:4px}
 .tab{padding:6px 14px;font-size:13px;border:1px solid transparent;border-radius:var(--radius-sm);cursor:pointer;color:var(--text-2);transition:all .12s;background:none;font-family:inherit;font-weight:500}
@@ -730,7 +732,7 @@ function renderGrid(list){
     var newBadge=pIsNew?'<div class="new-badge">NEW</div>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
     var cursorStyle=p.esgotado?'cursor:default;':'';
-    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')">🗑</button></div>':'';
+    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm dup" onclick="duplicateProduct(\''+p.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>':'';
     return'<div class="pcard'+(p.esgotado?' esgotado':'')+'" '+clickAttr+' style="'+cursorStyle+'">'+badge+newBadge+imgHtml+'<div class="pcard-body"><div class="pcard-cat">'+catLabel+'</div><div class="pcard-nome">'+p.nome+'</div>'+priceRow+cor+tagsHtml+'<div class="sizes-row">'+sizesHtml+'</div>'+desc+'</div>'+adminBtns+'</div>';
   }).join('');
 }
@@ -752,7 +754,7 @@ function renderList(list){
     var pill=p.esgotado?'<span class="status-pill esgt">Out of stock</span>':'<span class="status-pill disp">Available</span>';
     var vtIds=visibleTags().map(function(t){return t.id;});
     var tagsHtml=(p.tagIds||[]).map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).filter(function(t){return vtIds.includes(t.id);}).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+';margin-right:3px">'+t.label+'</span>';}).join('');
-    var adminTd=isAdmin?'<td onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')" style="margin-right:4px">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')" style="margin-right:4px">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')">Delete</button></td>':'';
+    var adminTd=isAdmin?'<td onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\\''+p.id+'\\')" style="margin-right:4px">Edit</button><button class="btn sm dup" onclick="duplicateProduct(\\''+p.id+'\\')" style="margin-right:4px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="btn sm danger" onclick="deleteProduct(\\''+p.id+'\\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
     var rowStyle=p.esgotado?'cursor:default':'cursor:pointer';
     return'<tr '+clickAttr+' style="'+rowStyle+'"><td>'+thumb+'</td><td><strong>'+p.nome+'</strong></td>'+(showSku?'<td style="color:var(--text-2)">'+(p.ref||'—')+'</td>':'')+'<td>'+p.cat+(scName?' · '+scName:'')+'</td>'+(showPrice?'<td>'+preco+'</td>':'')+'<td style="color:var(--text-2);font-size:12px">'+sizes+'</td><td>'+(tagsHtml||'—')+'</td><td>'+pill+'</td>'+adminTd+'</tr>';
@@ -793,7 +795,7 @@ function openDetail(id){
   var sizes=p.sizes||[];
   document.getElementById('detail-sizes').innerHTML=sizes.length?sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'" style="font-size:13px;padding:5px 12px">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join(''):'<span style="font-size:13px;color:var(--text-3)">No sizes defined</span>';
   var ab=document.getElementById('detail-admin-btns');
-  if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">Delete</button>';}else ab.style.display='none';
+  if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm dup" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">Delete</button>';}else ab.style.display='none';
   document.getElementById('detail-overlay').classList.add('open');
   document.getElementById('detail-overlay').scrollTop=0;
 }
