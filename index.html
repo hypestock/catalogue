@@ -733,8 +733,9 @@ function renderGrid(list){
   var g=document.getElementById('product-grid');
   if(!list.length){g.innerHTML='<div class="empty"><p>No items found.</p></div>';return;}
   // Sort: newest first (by createdAt desc), OOS always last
-  var avail=list.filter(function(p){return!p.esgotado;}).slice().sort(function(a,b){return(b.createdAt||0)>(a.createdAt||0)?1:-1;});
-  var oos=list.filter(function(p){return p.esgotado;}).slice().sort(function(a,b){return(b.createdAt||0)>(a.createdAt||0)?1:-1;});
+  function byDateDesc(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);}
+  var avail=list.filter(function(p){return!p.esgotado;}).slice().sort(byDateDesc);
+  var oos=list.filter(function(p){return p.esgotado;}).slice().sort(byDateDesc);
   var sorted=avail.concat(oos);
   var showPrice=isAdmin||(currentClient&&currentClient.showPrice);
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
@@ -762,7 +763,7 @@ function renderGrid(list){
 function renderList(list){
   var el=document.getElementById('product-list');
   if(!list.length){el.innerHTML='<div class="empty"><p>No items found.</p></div>';return;}
-  var sorted=list.slice().sort(function(a,b){return(a.esgotado?1:0)-(b.esgotado?1:0);});
+  var sorted=list.slice().sort(function(a,b){var oos=(a.esgotado?1:0)-(b.esgotado?1:0);if(oos!==0)return oos;return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
   var showPrice=isAdmin||(currentClient&&currentClient.showPrice);
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
   var showSku=isAdmin||!currentClient||currentClient.showSku!==false;
