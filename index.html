@@ -610,7 +610,10 @@ async function initApp(){
   }catch(e){showToast('Connection error — check your internet',true);console.error('initApp error',e);document.getElementById('loading-screen').classList.remove('show');document.getElementById('login-screen').style.display='flex';return;}
   _appReady=true;
   document.getElementById('loading-screen').classList.remove('show');
-  document.getElementById('login-screen').style.display='flex';
+  // Try to restore session
+  if(!restoreSession()){
+    document.getElementById('login-screen').style.display='flex';
+  }
 }
 
 async function saveConfig(){
@@ -620,12 +623,40 @@ async function saveConfig(){
   }catch(e){showToast('Save error — check connection',true);console.error('saveConfig error',e);}
 }
 
+// ─── SESSION ──────────────────────────────────────────────
+var SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
+function saveSession(roleId){
+  localStorage.setItem('cat_session', JSON.stringify({roleId: roleId, ts: Date.now()}));
+}
+
+function clearSession(){
+  localStorage.removeItem('cat_session');
+}
+
+function restoreSession(){
+  try{
+    var raw = localStorage.getItem('cat_session');
+    if(!raw) return false;
+    var s = JSON.parse(raw);
+    if(!s || !s.ts || (Date.now() - s.ts) > SESSION_TTL){ clearSession(); return false; }
+    if(s.roleId === '__admin__'){
+      isAdmin=true; currentClient=null;
+      startApp('admin'); return true;
+    }
+    var cl = clients.find(function(c){ return c.id === s.roleId; });
+    if(!cl){ clearSession(); return false; }
+    isAdmin=false; currentClient=cl;
+    startApp(cl.name); return true;
+  }catch(e){ clearSession(); return false; }
+}
+
 // ─── LOGIN ────────────────────────────────────────────────
 async function tryLogin(){
   var v=document.getElementById('pw-input').value;
-  if(v===ADMIN_PASS){isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');return;}
+  if(v===ADMIN_PASS){isAdmin=true;currentClient=null;saveSession('__admin__');logAccess('Admin');startApp('admin');return;}
   var cl=clients.find(function(c){return c.pw===v;});
-  if(cl){isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);return;}
+  if(cl){isAdmin=false;currentClient=cl;saveSession(cl.id);logAccess(cl.name);startApp(cl.name);return;}
   document.getElementById('login-err').textContent='Incorrect password.';
 }
 
@@ -640,6 +671,7 @@ function startApp(role){
 }
 
 function logout(){
+  clearSession();
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('pw-input').value='';
@@ -942,6 +974,9 @@ document.getElementById('detail-overlay').addEventListener('click',function(e){i
 
 // ─── EXPOSE TO GLOBAL SCOPE (required for type="module") ──
 window.tryLogin = tryLogin;
+window.saveSession = saveSession;
+window.clearSession = clearSession;
+window.restoreSession = restoreSession;
 window.toggleTheme = toggleTheme;
 window.logout = logout;
 window.openSettings = openSettings;
