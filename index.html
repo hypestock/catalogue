@@ -904,7 +904,8 @@ function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragDrop(e,i){e.preventDefault();if(dragSrcIdx===null||dragSrcIdx===i)return;var moved=tempImgs.splice(dragSrcIdx,1)[0];tempImgs.splice(i,0,moved);renderImgThumbs();}
 function dragEnd(){document.querySelectorAll('.img-thumb-item').forEach(function(el){el.classList.remove('dragging','drag-over');});dragSrcIdx=null;}
 
-function renderSizesEditor(){document.getElementById('sizes-editor').innerHTML=tempSizes.map(function(s,i){var pv=s.preco!==undefined&&s.preco!==''?s.preco:'';return'<div class="size-row-edit"><input type="text" value="'+s.size+'" placeholder="Size" oninput="tempSizes['+i+'].size=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" value="'+s.qty+'" placeholder="Qty" oninput="tempSizes['+i+'].qty=parseInt(this.value)||0" style="width:58px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" step="0.01" value="'+pv+'" placeholder="Price €" oninput="tempSizes['+i+'].preco=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><button class="btn sm danger" onclick="tempSizes.splice('+i+',1);renderSizesEditor()">✕</button></div>';}).join('');}
+function renderSizesEditor(){document.getElementById('sizes-editor').innerHTML=tempSizes.map(function(s,i){var pv=s.preco!==undefined&&s.preco!==''?s.preco:'';return'<div class="size-row-edit"><input type="text" value="'+s.size+'" placeholder="Size" oninput="tempSizes['+i+'].size=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" value="'+s.qty+'" placeholder="Qty" oninput="tempSizes['+i+'].qty=parseInt(this.value)||0" style="width:58px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" step="0.01" value="'+pv+'" placeholder="Price €" oninput="tempSizes['+i+'].preco=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><button class="btn sm danger" onclick="removeSizeAt('+i+')">✕</button></div>';}).join('');}
+function removeSizeAt(i){tempSizes.splice(i,1);renderSizesEditor();}
 function addSize(){var v=document.getElementById('new-size-input').value.trim();if(!v)return;tempSizes.push({size:v,qty:0});document.getElementById('new-size-input').value='';renderSizesEditor();}
 
 // ─── SAVE / DELETE / DUPLICATE ────────────────────────────
@@ -1036,6 +1037,10 @@ window.renderClientsList = renderClientsList;
 window.renderSkusList = renderSkusList;
 window.renderLogsList = renderLogsList;
 window.updateSubcatSelect = updateSubcatSelect;
+window.renderSizesEditor = renderSizesEditor;
+window.renderProducts = renderProducts;
+window.updateResetBtn = updateResetBtn;
+window.removeSizeAt = removeSizeAt;
 
 // ─── START ────────────────────────────────────────────────
 initApp();
