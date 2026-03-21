@@ -516,31 +516,55 @@ td{padding:10px 12px;vertical-align:middle}
   </div>
 </div>
 
-<script>
-// ─── SUPABASE CONFIG ──────────────────────────────────────
-var SUPA_URL='https://tgnhrveqjtjffpovhalm.supabase.co';
-var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRnbmhydmVxanRqZmZwb3ZoYWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjEyNDcsImV4cCI6MjA4OTMzNzI0N30.zQsMGGoQ4mgCrcC_eTfYoOA9oLaCGZAbP7FPcqj9wwI';
+<script type="module">
+// ─── FIREBASE CONFIG ──────────────────────────────────────
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, getDocs, deleteDoc, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-async function sbGet(table,key){
-  var r=await fetch(SUPA_URL+'/rest/v1/'+table+'?key=eq.'+encodeURIComponent(key)+'&select=value',{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
-  if(!r.ok)return null;
-  var d=await r.json();
-  return d&&d[0]?d[0].value:null;
+var firebaseConfig = {
+  apiKey: "AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",
+  authDomain: "brands-catalogue.firebaseapp.com",
+  projectId: "brands-catalogue",
+  storageBucket: "brands-catalogue.firebasestorage.app",
+  messagingSenderId: "196830175467",
+  appId: "1:196830175467:web:7ede1c3cc72e849ade1eae"
+};
+var _fbApp = initializeApp(firebaseConfig);
+var _db = getFirestore(_fbApp);
+
+async function sbGet(table, key) {
+  try {
+    var snap = await getDoc(doc(_db, table, key));
+    return snap.exists() ? snap.data().value : null;
+  } catch(e) { console.error('fbGet error', e); return null; }
 }
-async function sbSet(table,key,value){
-  await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:value,updated_at:new Date().toISOString()})});
+async function sbSet(table, key, value) {
+  try {
+    await setDoc(doc(_db, table, key), { value: value, updated_at: new Date().toISOString() });
+  } catch(e) { console.error('fbSet error', e); }
 }
-async function sbGetAllProducts(){
-  var r=await fetch(SUPA_URL+'/rest/v1/products?select=id,data&order=created_at.asc',{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
-  if(!r.ok)return[];
-  var d=await r.json();
-  return d.map(function(row){return Object.assign({},row.data,{id:row.id});});
+async function sbGetAllProducts() {
+  try {
+    var q = query(collection(_db, 'products'), orderBy('created_at', 'asc'));
+    var snap = await getDocs(q);
+    return snap.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
+  } catch(e) {
+    // fallback without ordering if index not ready
+    try {
+      var snap2 = await getDocs(collection(_db, 'products'));
+      return snap2.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
+    } catch(e2) { console.error('fbGetAllProducts error', e2); return []; }
+  }
 }
-async function sbUpsertProduct(p){
-  await fetch(SUPA_URL+'/rest/v1/products',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:String(p.id),data:p})});
+async function sbUpsertProduct(p) {
+  try {
+    await setDoc(doc(_db, 'products', String(p.id)), { data: p, created_at: p.createdAt || new Date().toISOString() }, { merge: true });
+  } catch(e) { console.error('fbUpsertProduct error', e); }
 }
-async function sbDeleteProduct(id){
-  await fetch(SUPA_URL+'/rest/v1/products?id=eq.'+encodeURIComponent(String(id)),{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+async function sbDeleteProduct(id) {
+  try {
+    await deleteDoc(doc(_db, 'products', String(id)));
+  } catch(e) { console.error('fbDeleteProduct error', e); }
 }
 
 // ─── STATE ────────────────────────────────────────────────
@@ -913,6 +937,69 @@ document.getElementById('modal-overlay').addEventListener('click',function(e){if
 document.getElementById('settings-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('client-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('detail-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+
+
+// ─── EXPOSE TO GLOBAL SCOPE (required for type="module") ──
+window.tryLogin = tryLogin;
+window.toggleTheme = toggleTheme;
+window.logout = logout;
+window.openSettings = openSettings;
+window.switchStab = switchStab;
+window.addBrand = addBrand;
+window.removeBrand = removeBrand;
+window.renderBrandsList = renderBrandsList;
+window.moveItem = moveItem;
+window.saveConfig = saveConfig;
+window.updateBrandSelects = updateBrandSelects;
+window.buildSidebarFilters = buildSidebarFilters;
+window.addGlobalTagFromSettings = addGlobalTagFromSettings;
+window.deleteGlobalTag = deleteGlobalTag;
+window.addSubcat = addSubcat;
+window.removeSubcat = removeSubcat;
+window.openClientModal = openClientModal;
+window.saveClient = saveClient;
+window.removeClient = removeClient;
+window.toggleClientTag = toggleClientTag;
+window.clearLogs = clearLogs;
+window.changePw = changePw;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.saveProduct = saveProduct;
+window.deleteProduct = deleteProduct;
+window.duplicateProduct = duplicateProduct;
+window.openDetail = openDetail;
+window.openFullscreen = openFullscreen;
+window.fsSlide = fsSlide;
+window.closeFsOverlay = closeFsOverlay;
+window.detailSlide = detailSlide;
+window.detailDot = detailDot;
+window.setTab = setTab;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.toggleFilter = toggleFilter;
+window.resetFilters = resetFilters;
+window.setF = setF;
+window.setSubF = setSubF;
+window.renderTagPicker = renderTagPicker;
+window.toggleTagSel = toggleTagSel;
+window.createGlobalTag = createGlobalTag;
+window.handleImgs = handleImgs;
+window.removeImg = removeImg;
+window.dragStart = dragStart;
+window.dragOver = dragOver;
+window.dragLeave = dragLeave;
+window.dragDrop = dragDrop;
+window.dragEnd = dragEnd;
+window.addSize = addSize;
+window.checkSkuDuplicate = checkSkuDuplicate;
+window.slideImg = slideImg;
+window.slideDir = slideDir;
+window.renderGlobalTagsList = renderGlobalTagsList;
+window.renderSubcatsList = renderSubcatsList;
+window.renderBrandsList = renderBrandsList;
+window.renderClientsList = renderClientsList;
+window.renderSkusList = renderSkusList;
+window.renderLogsList = renderLogsList;
+window.updateSubcatSelect = updateSubcatSelect;
 
 // ─── START ────────────────────────────────────────────────
 initApp();
