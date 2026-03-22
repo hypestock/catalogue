@@ -453,17 +453,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div style="max-height:360px;overflow-y:auto" id="skus-list"></div>
     </div>
     <div class="stab-panel" id="stab-security">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2)">
-        <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Passwords managed by Firebase</div>
-        <p>Passwords are now validated securely by Firebase Authentication — they are never stored in this site's code.</p>
-        <p style="margin-top:8px">To change a password:</p>
-        <ol style="margin-top:6px;padding-left:18px;display:flex;flex-direction:column;gap:4px">
-          <li>Go to <strong>console.firebase.google.com</strong></li>
-          <li>Open your project → <strong>Authentication → Users</strong></li>
-          <li>Find the user and click <strong>Reset password</strong></li>
-        </ol>
-        <p style="margin-top:8px">To add a new client, first create a user in Firebase Authentication, then add their email in the <strong>Clients</strong> tab here.</p>
-      </div>
+      <div class="mrow"><label>New admin password</label><input type="password" id="new-pw" placeholder="New password"></div>
+      <div class="mrow"><label>Confirm</label><input type="password" id="confirm-pw" placeholder="Repeat"></div>
+      <div class="modal-err" id="pw-err"></div>
+      <div class="modal-footer" style="margin-top:.5rem"><button class="btn dark" onclick="changePw()">Save password</button></div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
       <button class="btn" onclick="document.getElementById('settings-overlay').classList.remove('open')">Close</button>
@@ -477,7 +470,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="modal-close" onclick="document.getElementById('client-modal').classList.remove('open')">✕</button>
     <h2 id="client-modal-title">New client</h2>
     <div class="mrow"><label>Client name</label><input type="text" id="cl-name" placeholder="e.g. Boutique ABC"></div>
-    <div class="mrow"><label>Email <span style="text-transform:none;font-size:11px;color:var(--text-3)">(same email registered in Firebase Authentication)</span></label><input type="email" id="cl-email" placeholder="cliente@email.com"></div>
+    <div class="mrow"><label>Password</label><input type="text" id="cl-pw" placeholder="e.g. boutique123"></div>
     <div class="mrow">
       <label>Permissions</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
@@ -503,7 +496,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // ─── FIREBASE CONFIG ──────────────────────────────────────
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, getDocs, deleteDoc, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 var firebaseConfig = {
   apiKey: "AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",
@@ -515,9 +507,7 @@ var firebaseConfig = {
 };
 var _fbApp = initializeApp(firebaseConfig);
 var _db = getFirestore(_fbApp);
-var _auth = getAuth(_fbApp);
 
-// ─── FIRESTORE HELPERS ────────────────────────────────────
 async function sbGet(table, key) {
   try {
     var snap = await getDoc(doc(_db, table, key));
@@ -535,6 +525,7 @@ async function sbGetAllProducts() {
     var snap = await getDocs(q);
     return snap.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
   } catch(e) {
+    // fallback without ordering if index not ready
     try {
       var snap2 = await getDocs(collection(_db, 'products'));
       return snap2.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
@@ -553,15 +544,14 @@ async function sbDeleteProduct(id) {
 }
 
 // ─── STATE ────────────────────────────────────────────────
+var ADMIN_PASS='admin123';
 var products=[];
 var brands=[];
 var globalTags=[];
 var subcats=[];
 var clients=[];
 var accessLogs=[];
-var _appReady=false;
-// ADMIN_EMAIL: the Firebase Auth email you used for the admin account
-var ADMIN_EMAIL='admin@catalogue.com';
+var _appReady=false; // guard: don't saveConfig before initApp loads data
 
 var editingId=null,editingClientId=null;
 var tempSizes=[],tempImgs=[],tempTagIds=[];
@@ -579,103 +569,75 @@ function tagStyle(hex){return 'background:'+hex+';color:#1a1a18';}
 
 function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap';document.body.appendChild(t);}t.textContent=msg;t.style.background=isError?'#dc2626':'#16a34a';t.style.color='#fff';t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';},isError?3500:2200);}
 
-// ─── LOAD CONFIG FROM FIRESTORE ───────────────────────────
-async function loadAppData(){
-  var cfg=await sbGet('app_config','settings');
-  if(cfg){
-    if(cfg.brands)brands=cfg.brands;
-    if(cfg.globalTags)globalTags=cfg.globalTags;
-    if(cfg.subcats)subcats=cfg.subcats;
-    if(cfg.clients)clients=cfg.clients;
-    if(cfg.accessLogs)accessLogs=cfg.accessLogs;
-  }
-  products=await sbGetAllProducts();
+// ─── INIT: load all data from Supabase ────────────────────
+async function initApp(){
+  document.getElementById('loading-screen').classList.add('show');
+  try{
+    var cfg=await sbGet('app_config','settings');
+    if(cfg){
+      if(cfg.adminPass)ADMIN_PASS=cfg.adminPass;
+      if(cfg.brands)brands=cfg.brands;
+      if(cfg.globalTags)globalTags=cfg.globalTags;
+      if(cfg.subcats)subcats=cfg.subcats;
+      if(cfg.clients)clients=cfg.clients;
+      if(cfg.accessLogs)accessLogs=cfg.accessLogs;
+    }
+    products=await sbGetAllProducts();
+  }catch(e){showToast('Connection error — check your internet',true);console.error('initApp error',e);document.getElementById('loading-screen').classList.remove('show');document.getElementById('login-screen').style.display='flex';return;}
   _appReady=true;
+  document.getElementById('loading-screen').classList.remove('show');
+  // Try to restore session
+  if(!restoreSession()){
+    document.getElementById('login-screen').style.display='flex';
+  }
 }
 
 async function saveConfig(){
-  if(!_appReady){console.warn('saveConfig blocked: app not ready');return;}
+  if(!_appReady){console.warn('saveConfig blocked: app not ready yet');return;}
   saveConfig._queue=(saveConfig._queue||Promise.resolve()).then(async function(){
     try{
-      await sbSet('app_config','settings',{brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});
+      await sbSet('app_config','settings',{adminPass:ADMIN_PASS,brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});
     }catch(e){showToast('Save error — check connection',true);console.error('saveConfig error',e);}
   });
   return saveConfig._queue;
 }
 
-// ─── FIREBASE AUTH: real server-side login ────────────────
-// Login flow: Firebase validates email+password on the server.
-// Nobody can bypass this from DevTools — the Firestore rules
-// require request.auth != null, so unauthenticated reads/writes
-// are rejected at the database level.
+// ─── SESSION ──────────────────────────────────────────────
+var SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
-async function tryLogin(){
-  var pw=document.getElementById('pw-input').value.trim();
-  if(!pw){document.getElementById('login-err').textContent='Enter your password.';return;}
-  var btn=document.querySelector('.btn-login');
-  btn.disabled=true;btn.textContent='Signing in...';
-  document.getElementById('login-err').textContent='';
-
-  // Try admin first, then each client email
-  var emailsToTry=[ADMIN_EMAIL];
-  clients.forEach(function(c){if(c.email)emailsToTry.push(c.email);});
-
-  // We try signing in — Firebase will reject wrong passwords server-side
-  var success=false;
-  for(var i=0;i<emailsToTry.length;i++){
-    try{
-      await signInWithEmailAndPassword(_auth, emailsToTry[i], pw);
-      success=true;break;
-    }catch(e){/* try next */}
-  }
-  btn.disabled=false;btn.textContent='Sign in';
-  if(!success){
-    document.getElementById('login-err').textContent='Incorrect password.';
-  }
-  // onAuthStateChanged below handles the rest after successful login
+function saveSession(roleId){
+  localStorage.setItem('cat_session', JSON.stringify({roleId: roleId, ts: Date.now()}));
 }
 
-// onAuthStateChanged is the real gatekeeper — fires on every page load
-// If not authenticated, Firebase Auth returns null and we show login
-onAuthStateChanged(_auth, async function(user){
-  if(!user){
-    // Not authenticated — show login, never show app
-    document.getElementById('loading-screen').classList.remove('show');
-    document.getElementById('login-screen').style.display='flex';
-    return;
-  }
-  // Authenticated — now load data and start app
-  document.getElementById('loading-screen').classList.add('show');
-  try{
-    await loadAppData();
-  }catch(e){
-    showToast('Connection error — check your internet',true);
-    console.error('loadAppData error',e);
-    document.getElementById('loading-screen').classList.remove('show');
-    await signOut(_auth);
-    return;
-  }
-  document.getElementById('loading-screen').classList.remove('show');
+function clearSession(){
+  localStorage.removeItem('cat_session');
+}
 
-  // Determine role from email
-  if(user.email===ADMIN_EMAIL){
-    isAdmin=true;currentClient=null;
-    logAccess('Admin');
-    startApp('admin');
-  }else{
-    // Find matching client by email
-    var cl=clients.find(function(c){return c.email&&c.email.toLowerCase()===user.email.toLowerCase();});
-    if(cl){
-      isAdmin=false;currentClient=cl;
-      logAccess(cl.name);
-      startApp(cl.name);
-    }else{
-      // Authenticated but no client profile — sign out
-      showToast('No profile found for this account.',true);
-      await signOut(_auth);
+function restoreSession(){
+  try{
+    var raw = localStorage.getItem('cat_session');
+    if(!raw) return false;
+    var s = JSON.parse(raw);
+    if(!s || !s.ts || (Date.now() - s.ts) > SESSION_TTL){ clearSession(); return false; }
+    if(s.roleId === '__admin__'){
+      isAdmin=true; currentClient=null;
+      startApp('admin'); return true;
     }
-  }
-});
+    var cl = clients.find(function(c){ return c.id === s.roleId; });
+    if(!cl){ clearSession(); return false; }
+    isAdmin=false; currentClient=cl;
+    startApp(cl.name); return true;
+  }catch(e){ clearSession(); return false; }
+}
+
+// ─── LOGIN ────────────────────────────────────────────────
+async function tryLogin(){
+  var v=document.getElementById('pw-input').value;
+  if(v===ADMIN_PASS){isAdmin=true;currentClient=null;saveSession('__admin__');logAccess('Admin');startApp('admin');return;}
+  var cl=clients.find(function(c){return c.pw===v;});
+  if(cl){isAdmin=false;currentClient=cl;saveSession(cl.id);logAccess(cl.name);startApp(cl.name);return;}
+  document.getElementById('login-err').textContent='Incorrect password.';
+}
 
 function startApp(role){
   document.getElementById('login-screen').style.display='none';
@@ -687,13 +649,13 @@ function startApp(role){
   populateCatSelect();updateBrandSelects();buildSidebarFilters();renderProducts();
 }
 
-async function logout(){
-  isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
+function logout(){
+  clearSession();
+  document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('pw-input').value='';
   document.getElementById('login-err').textContent='';
-  await signOut(_auth);
-  // onAuthStateChanged will show login screen automatically
+  isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
 }
 
 async function logAccess(name){
@@ -880,10 +842,30 @@ function checkSkuDuplicate(val){
 }
 
 // ─── TAGS ─────────────────────────────────────────────────
-function renderTagPicker(){document.getElementById('tag-picker-grid').innerHTML=globalTags.map(function(t){var sel=tempTagIds.includes(t.id);return'<div class="tag-picker-item'+(sel?' selected':'')+'" onclick="toggleTagSel(\''+t.id+'\',this)" style="'+tagStyle(t.color)+'">'+t.label+'<button class="tag-del-small" onclick="event.stopPropagation();deleteGlobalTag(\''+t.id+'\')" title="Delete">✕</button></div>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags yet.</span>';}
-function toggleTagSel(id,el){if(tempTagIds.includes(id))tempTagIds=tempTagIds.filter(function(x){return x!==id;});else tempTagIds.push(id);el.classList.toggle('selected',tempTagIds.includes(id));}
+function renderTagPicker(){
+  document.getElementById('tag-picker-grid').innerHTML=globalTags.map(function(t){
+    var sel=tempTagIds.includes(t.id);
+    return'<div class="tag-picker-item'+(sel?' selected':'')+'" data-tagid="'+t.id+'" onclick="toggleTagSel(this)" style="'+tagStyle(t.color)+'">'+t.label
+      +'<button class="tag-del-small" onclick="event.stopPropagation();deleteGlobalTag(\''+t.id+'\')" title="Delete">✕</button></div>';
+  }).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags yet.</span>';
+}
+function toggleTagSel(el){
+  var id=el.dataset.tagid;
+  var isSel=el.classList.contains('selected');
+  if(isSel){tempTagIds=tempTagIds.filter(function(x){return x!==id;});el.classList.remove('selected');}
+  else{tempTagIds.push(id);el.classList.add('selected');}
+}
 async function createGlobalTag(){var label=document.getElementById('new-tag-input').value.trim();if(!label)return;var color=document.getElementById('new-tag-color').value;var id='tag_'+Date.now();globalTags.push({id:id,label:label,color:color});await saveConfig();document.getElementById('new-tag-input').value='';tempTagIds.push(id);renderTagPicker();buildSidebarFilters();}
-async function deleteGlobalTag(id){globalTags=globalTags.filter(function(t){return t.id!==id;});products.forEach(function(p){p.tagIds=(p.tagIds||[]).filter(function(x){return x!==id;});});tempTagIds=tempTagIds.filter(function(x){return x!==id;});await saveConfig();for(var i=0;i<products.length;i++){await sbUpsertProduct(products[i]);}renderTagPicker();buildSidebarFilters();renderProducts();renderGlobalTagsList();}
+async function deleteGlobalTag(id){
+  globalTags=globalTags.filter(function(t){return t.id!==id;});
+  var affected=products.filter(function(p){return(p.tagIds||[]).includes(id);});
+  affected.forEach(function(p){p.tagIds=(p.tagIds||[]).filter(function(x){return x!==id;});});
+  tempTagIds=tempTagIds.filter(function(x){return x!==id;});
+  await saveConfig();
+  // Update affected products in parallel
+  await Promise.all(affected.map(function(p){return sbUpsertProduct(p);}));
+  renderTagPicker();buildSidebarFilters();renderProducts();renderGlobalTagsList();
+}
 
 // ─── IMAGES ───────────────────────────────────────────────
 function handleImgs(e){var files=Array.from(e.target.files);var loaded=0;files.forEach(function(f){var r=new FileReader();r.onload=function(ev){tempImgs.push(ev.target.result);loaded++;if(loaded===files.length)renderImgThumbs();};r.readAsDataURL(f);});e.target.value='';}
@@ -895,7 +877,27 @@ function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragDrop(e,i){e.preventDefault();if(dragSrcIdx===null||dragSrcIdx===i)return;var moved=tempImgs.splice(dragSrcIdx,1)[0];tempImgs.splice(i,0,moved);renderImgThumbs();}
 function dragEnd(){document.querySelectorAll('.img-thumb-item').forEach(function(el){el.classList.remove('dragging','drag-over');});dragSrcIdx=null;}
 
-function renderSizesEditor(){document.getElementById('sizes-editor').innerHTML=tempSizes.map(function(s,i){var pv=s.preco!==undefined&&s.preco!==''?s.preco:'';return'<div class="size-row-edit"><input type="text" value="'+s.size+'" placeholder="Size" oninput="tempSizes['+i+'].size=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" value="'+s.qty+'" placeholder="Qty" oninput="tempSizes['+i+'].qty=parseInt(this.value)||0" style="width:58px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="number" min="0" step="0.01" value="'+pv+'" placeholder="Price €" oninput="tempSizes['+i+'].preco=this.value" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><button class="btn sm danger" onclick="removeSizeAt('+i+')">✕</button></div>';}).join('');}
+function renderSizesEditor(){
+  document.getElementById('sizes-editor').innerHTML=tempSizes.map(function(s,i){
+    var pv=s.preco!==undefined&&s.preco!==''?s.preco:'';
+    return'<div class="size-row-edit" data-idx="'+i+'">'
+      +'<input type="text" value="'+s.size+'" placeholder="Size" data-field="size" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none">'
+      +'<input type="number" min="0" value="'+s.qty+'" placeholder="Qty" data-field="qty" oninput="updateAutoOOS()" style="width:58px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none">'
+      +'<input type="number" min="0" step="0.01" value="'+pv+'" placeholder="Price €" data-field="preco" style="width:80px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none">'
+      +'<button class="btn sm danger" onclick="removeSizeAt('+i+')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function readSizesFromDOM(){
+  return Array.from(document.querySelectorAll('#sizes-editor .size-row-edit')).map(function(row){
+    return{size:row.querySelector('[data-field="size"]').value.trim(),qty:parseInt(row.querySelector('[data-field="qty"]').value)||0,preco:row.querySelector('[data-field="preco"]').value};
+  }).filter(function(s){return s.size;});
+}
+function updateAutoOOS(){
+  var sizes=readSizesFromDOM();
+  if(sizes.length>0&&sizes.every(function(s){return s.qty<=0;})){document.getElementById('f-esgotado').checked=true;}
+  else if(sizes.some(function(s){return s.qty>0;})){document.getElementById('f-esgotado').checked=false;}
+}
 function removeSizeAt(i){tempSizes.splice(i,1);renderSizesEditor();}
 function addSize(){var v=document.getElementById('new-size-input').value.trim();if(!v)return;tempSizes.push({size:v,qty:0});document.getElementById('new-size-input').value='';renderSizesEditor();}
 
@@ -904,7 +906,14 @@ async function saveProduct(){
   var nome=document.getElementById('f-nome').value.trim();if(!nome){alert('Please enter the item name.');return;}
   if(checkSkuDuplicate(document.getElementById('f-ref').value)){showToast('SKU already in use — choose a different one',true);return;}
   var now=new Date().toISOString();
-  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:document.getElementById('f-esgotado').checked,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:tempSizes.filter(function(s){return s.size;}),tagIds:[...tempTagIds]};
+  var filteredSizes=readSizesFromDOM();
+  // Read tags from DOM (module scope issue)
+  var tagIds=Array.from(document.querySelectorAll('#tag-picker-grid .tag-picker-item.selected')).map(function(el){return el.dataset.tagid;});
+  // Auto OOS: if all sizes have qty 0, mark as out of stock
+  var manualOOS=document.getElementById('f-esgotado').checked;
+  var autoOOS=filteredSizes.length>0&&filteredSizes.every(function(s){return s.qty<=0;});
+  var esgotado=manualOOS||autoOOS;
+  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:esgotado,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:filteredSizes,tagIds:tagIds};
   if(!editingId)p.createdAt=now;
   else{var existing=products.find(function(x){return String(x.id)===String(editingId);});if(existing&&existing.createdAt)p.createdAt=existing.createdAt;}
   if(editingId){var idx=products.findIndex(function(x){return String(x.id)===String(editingId);});if(idx>=0)products[idx]=p;else products.push(p);}else{products.push(p);}
@@ -945,10 +954,10 @@ function renderSubcatsList(){document.getElementById('subcats-list').innerHTML=s
 async function addSubcat(){var name=document.getElementById('new-subcat-name').value.trim();if(!name)return;var parent=document.getElementById('new-subcat-parent').value;subcats.push({id:'sc_'+Date.now(),name:name,parent:parent});await saveConfig();document.getElementById('new-subcat-name').value='';renderSubcatsList();buildSidebarFilters();showToast('Subcategory added ✓');}
 async function removeSubcat(i){subcats.splice(i,1);await saveConfig();renderSubcatsList();buildSidebarFilters();}
 
-function renderClientsList(){var el=document.getElementById('clients-list');var q=(document.getElementById('client-search')&&document.getElementById('client-search').value||'').toLowerCase();var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q);});if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}el.innerHTML=filtered.map(function(c){var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Email: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+(c.email||'—')+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';}).join('');}
-function openClientModal(id){editingClientId=id||null;var c=id?clients.find(function(x){return x.id===id;}):null;document.getElementById('client-modal-title').textContent=c?'Edit client':'New client';document.getElementById('cl-name').value=c?c.name:'';document.getElementById('cl-email').value=c?c.email||'':'';document.getElementById('cl-show-price').checked=c?!!c.showPrice:true;document.getElementById('cl-show-qty').checked=c?!!c.showQty:true;document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;document.getElementById('cl-show-sku').checked=c?(c.showSku!==false):true;document.getElementById('cl-show-desc').checked=c?(c.showDesc!==false):true;var selIds=c?(c.visibleTagIds||[]):[];document.getElementById('cl-tags-picker').innerHTML=globalTags.map(function(t){var sel=selIds.includes(t.id);return'<span class="ptag" data-id="'+t.id+'" data-sel="'+(sel?'1':'0')+'" style="'+tagStyle(t.color)+';cursor:pointer;border:2px solid '+(sel?'var(--accent)':'transparent')+';padding:3px 10px;border-radius:20px" onclick="toggleClientTag(this)">'+t.label+'</span>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created yet.</span>';document.getElementById('client-modal').classList.add('open');}
+function renderClientsList(){var el=document.getElementById('clients-list');var q=(document.getElementById('client-search')&&document.getElementById('client-search').value||'').toLowerCase();var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||c.pw.toLowerCase().includes(q);});if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}el.innerHTML=filtered.map(function(c){var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Password: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+c.pw+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';}).join('');}
+function openClientModal(id){editingClientId=id||null;var c=id?clients.find(function(x){return x.id===id;}):null;document.getElementById('client-modal-title').textContent=c?'Edit client':'New client';document.getElementById('cl-name').value=c?c.name:'';document.getElementById('cl-pw').value=c?c.pw:'';document.getElementById('cl-show-price').checked=c?!!c.showPrice:true;document.getElementById('cl-show-qty').checked=c?!!c.showQty:true;document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;document.getElementById('cl-show-sku').checked=c?(c.showSku!==false):true;document.getElementById('cl-show-desc').checked=c?(c.showDesc!==false):true;var selIds=c?(c.visibleTagIds||[]):[];document.getElementById('cl-tags-picker').innerHTML=globalTags.map(function(t){var sel=selIds.includes(t.id);return'<span class="ptag" data-id="'+t.id+'" data-sel="'+(sel?'1':'0')+'" style="'+tagStyle(t.color)+';cursor:pointer;border:2px solid '+(sel?'var(--accent)':'transparent')+';padding:3px 10px;border-radius:20px" onclick="toggleClientTag(this)">'+t.label+'</span>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created yet.</span>';document.getElementById('client-modal').classList.add('open');}
 function toggleClientTag(el){var sel=el.dataset.sel==='1';el.dataset.sel=sel?'0':'1';el.style.border='2px solid '+(sel?'transparent':'var(--accent)');}
-async function saveClient(){var name=document.getElementById('cl-name').value.trim(),email=document.getElementById('cl-email').value.trim().toLowerCase();if(!name||!email){alert('Name and email are required.');return;}var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});var c={id:editingClientId||'cl_'+Date.now(),name:name,email:email,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');}
+async function saveClient(){var name=document.getElementById('cl-name').value.trim(),pw=document.getElementById('cl-pw').value.trim();if(!name||!pw){alert('Name and password are required.');return;}var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});var c={id:editingClientId||'cl_'+Date.now(),name:name,pw:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');}
 async function removeClient(id){if(!confirm('Delete this client?'))return;clients=clients.filter(function(x){return x.id!==id;});await saveConfig();renderClientsList();}
 
 function renderSkusList(){var el=document.getElementById('skus-list');var used=products.filter(function(p){return p.ref&&p.ref.trim();}).map(function(p){return{sku:p.ref,nome:p.nome};});used.sort(function(a,b){return a.sku.localeCompare(b.sku);});if(!used.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3)">No SKUs assigned yet.</p>';return;}el.innerHTML='<table class="log-table"><thead><tr><th>SKU</th><th>Product</th></tr></thead><tbody>'+used.map(function(u){return'<tr><td><code style="font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:3px">'+u.sku+'</code></td><td style="color:var(--text-2)">'+u.nome+'</td></tr>';}).join('')+'</tbody></table>';}
@@ -966,6 +975,9 @@ document.getElementById('detail-overlay').addEventListener('click',function(e){i
 
 // ─── EXPOSE TO GLOBAL SCOPE (required for type="module") ──
 window.tryLogin = tryLogin;
+window.saveSession = saveSession;
+window.clearSession = clearSession;
+window.restoreSession = restoreSession;
 window.toggleTheme = toggleTheme;
 window.logout = logout;
 window.openSettings = openSettings;
@@ -1025,12 +1037,15 @@ window.renderSkusList = renderSkusList;
 window.renderLogsList = renderLogsList;
 window.updateSubcatSelect = updateSubcatSelect;
 window.renderSizesEditor = renderSizesEditor;
+window.readSizesFromDOM = readSizesFromDOM;
+window.updateAutoOOS = updateAutoOOS;
+window.toggleTagSel = toggleTagSel;
 window.renderProducts = renderProducts;
 window.updateResetBtn = updateResetBtn;
 window.removeSizeAt = removeSizeAt;
 
-// ─── START: onAuthStateChanged handles everything ─────────
-// (no initApp() needed — Firebase Auth triggers automatically)
+// ─── START ────────────────────────────────────────────────
+initApp();
 </script>
 </body>
 </html>
