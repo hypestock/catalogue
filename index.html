@@ -491,8 +491,7 @@ function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=
 
 // ── LOAD CONFIG (clients needed before login) ────────────────
 var _configReady=false;
-// Start immediately so clients are ready before user clicks Sign in
-var _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
+var _configPromise=null;
 
 async function loadConfig(){
   var cfg=await sbGet('app_config','settings');
@@ -522,38 +521,34 @@ async function tryLogin(){
   var btn=document.getElementById('login-btn');
   btn.disabled=true;btn.textContent='Signing in...';
   document.getElementById('login-err').textContent='';
-  // Ensure clients list is loaded
-  await _configPromise;
-  // Try all known emails in parallel — first success wins
+  // Ensure config (clients list) is fully loaded before attempting login
+  if(_configPromise){await _configPromise;}
+  // Try admin email first, then all client emails
   var emailsToTry=[ADMIN_EMAIL].concat(clients.map(function(c){return c.email;}).filter(Boolean));
-  var results=await Promise.allSettled(
-    emailsToTry.map(function(email){
-      return signInWithEmailAndPassword(_auth,email,pw);
-    })
-  );
-  var ok=results.some(function(r){return r.status==='fulfilled';});
-  if(!ok){
-    btn.disabled=false;btn.textContent='Sign in';
-    document.getElementById('login-err').textContent='Incorrect password.';
+  var ok=false;
+  for(var i=0;i<emailsToTry.length;i++){
+    try{await signInWithEmailAndPassword(_auth,emailsToTry[i],pw);ok=true;break;}catch(e){}
   }
-  // onAuthStateChanged handles the rest on success
+  btn.disabled=false;btn.textContent='Sign in';
+  if(!ok){document.getElementById('login-err').textContent='Incorrect password.';}
 }
 
 onAuthStateChanged(_auth,async function(user){
   if(!user){
-    await _configPromise; // wait for clients to load
+    // Load clients so tryLogin can find the right email before auth
+    document.getElementById('loading-screen').classList.add('show');
+    _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
+    await _configPromise;
     document.getElementById('loading-screen').classList.remove('show');
     document.getElementById('app').style.display='none';
     document.getElementById('login-screen').style.display='flex';
     return;
   }
+  // Authenticated — now load everything
   document.getElementById('loading-screen').classList.add('show');
   document.getElementById('login-screen').style.display='none';
-  try{
-    await _configPromise; // ensure config done
-    products=await sbGetAllProducts();
-    _appReady=true;
-  }catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
+  try{await loadAppData();}
+  catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
   document.getElementById('loading-screen').classList.remove('show');
   if(user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()){
     isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
