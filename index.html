@@ -296,6 +296,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div id="detail-cor" style="font-size:12px;color:var(--text-3);margin-bottom:10px"></div>
       <div id="detail-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px"></div>
       <div id="detail-sizes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+      <div id="detail-fit" style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:none"></div>
       <div id="detail-desc" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px"></div>
       <div id="detail-ref" style="font-size:11px;color:var(--text-3)"></div>
       <div id="detail-admin-btns" style="display:none;gap:8px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)"></div>
@@ -327,6 +328,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="mrow" style="margin-bottom:0"><label>Colour</label><input type="text" id="f-cor" placeholder="e.g. Navy blue"></div>
     </div>
     <div style="height:14px"></div>
+    <div class="mrow"><label>Fit</label><input type="text" id="f-fit" placeholder="e.g. Regular fit, Slim fit, Oversized..."></div>
     <div class="mrow">
       <label>Tags</label>
       <div class="tag-picker-grid" id="tag-picker-grid"></div>
@@ -632,12 +634,13 @@ function renderGrid(list){
     var cor=p.cor?'<div class="pcard-cor">'+p.cor+'</div>':'';
     var tagsHtml=buildTagsHtml(p);
     var desc=showDesc&&p.desc?'<div class="pcard-desc">'+p.desc+'</div>':'';
+    var fit=p.fit?'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:5px">'+p.fit+'</div>':'';
     var badge=p.esgotado?'<div class="esgotado-badge">Out of stock</div>':'';
     var newBadge=isNew(p)?'<div class="new-badge">NEW</div>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
     var cursorStyle=p.esgotado?'cursor:default;':'';
     var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')">Del</button></div>':'';
-    return'<div class="pcard'+(p.esgotado?' esgotado':'')+'" '+clickAttr+' style="'+cursorStyle+'">'+badge+newBadge+imgHtml+'<div class="pcard-body"><div class="pcard-cat">'+catLabel+'</div><div class="pcard-nome">'+p.nome+'</div>'+priceRow+cor+tagsHtml+'<div class="sizes-row">'+sizesHtml+'</div>'+desc+'</div>'+adminBtns+'</div>';
+    return'<div class="pcard'+(p.esgotado?' esgotado':'')+'" '+clickAttr+' style="'+cursorStyle+'">'+badge+newBadge+imgHtml+'<div class="pcard-body"><div class="pcard-cat">'+catLabel+'</div><div class="pcard-nome">'+p.nome+'</div>'+priceRow+cor+tagsHtml+'<div class="sizes-row">'+sizesHtml+'</div>'+fit+desc+'</div>'+adminBtns+'</div>';
   }).join('');
 }
 
@@ -671,6 +674,7 @@ function openDetail(id){
   document.getElementById('detail-tags').innerHTML=tags.map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join('');
   var sizes=p.sizes||[];
   document.getElementById('detail-sizes').innerHTML=sizes.length?sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'" style="font-size:13px;padding:5px 12px">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join(''):'<span style="font-size:13px;color:var(--text-3)">No sizes defined</span>';
+  var fitEl=document.getElementById('detail-fit');if(fitEl){fitEl.textContent=p.fit||'';fitEl.style.display=p.fit?'':'none';}
   var ab=document.getElementById('detail-admin-btns');
   if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">Delete</button>';}else ab.style.display='none';
   document.getElementById('detail-overlay').classList.add('open');document.getElementById('detail-overlay').scrollTop=0;
@@ -692,11 +696,11 @@ function openModal(id){
   if(id){
     var p=products.find(function(x){return String(x.id)===String(id);});
     document.getElementById('f-nome').value=p.nome;document.getElementById('f-cat').value=p.cat;updateSubcatSelect();document.getElementById('f-subcat').value=p.subcat||'';
-    document.getElementById('f-ref').value=p.ref||'';document.getElementById('f-preco').value=p.preco||'';document.getElementById('f-pvp').value=p.pvp||'';document.getElementById('f-desc').value=p.desc||'';document.getElementById('f-cor').value=p.cor||'';
+    document.getElementById('f-ref').value=p.ref||'';document.getElementById('f-preco').value=p.preco||'';document.getElementById('f-pvp').value=p.pvp||'';document.getElementById('f-desc').value=p.desc||'';document.getElementById('f-cor').value=p.cor||'';document.getElementById('f-fit').value=p.fit||'';
     document.getElementById('f-esgotado').checked=!!p.esgotado;document.getElementById('f-marca').value=p.marca||'';
     tempImgs=p.imgs?[...p.imgs]:(p.img?[p.img]:[]);tempSizes=(p.sizes||[]).map(function(s){return Object.assign({},s);});tempTagIds=[...(p.tagIds||[])];
   }else{
-    ['f-nome','f-ref','f-preco','f-pvp','f-desc','f-cor'].forEach(function(i){document.getElementById(i).value='';});
+    ['f-nome','f-ref','f-preco','f-pvp','f-desc','f-cor','f-fit'].forEach(function(i){document.getElementById(i).value='';});
     document.getElementById('f-cat').value='Clothing';updateSubcatSelect();document.getElementById('f-marca').value='';document.getElementById('f-esgotado').checked=false;
   }
   renderTagPicker();renderImgThumbs();renderSizesEditor();
@@ -752,7 +756,7 @@ async function saveProduct(){
   var manualOOS=document.getElementById('f-esgotado').checked;
   var autoOOS=filteredSizes.length>0&&filteredSizes.every(function(s){return s.qty<=0;});
   var now=new Date().toISOString();
-  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:manualOOS||autoOOS,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:filteredSizes,tagIds:tagIds};
+  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,fit:document.getElementById('f-fit').value.trim(),desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:manualOOS||autoOOS,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:filteredSizes,tagIds:tagIds};
   if(!editingId)p.createdAt=now;
   else{var ex=products.find(function(x){return String(x.id)===String(editingId);});if(ex&&ex.createdAt)p.createdAt=ex.createdAt;}
   if(editingId){var idx=products.findIndex(function(x){return String(x.id)===String(editingId);});if(idx>=0)products[idx]=p;else products.push(p);}else products.push(p);
