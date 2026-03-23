@@ -23,6 +23,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .field input:focus{border-color:var(--border-md)}
 .btn-login{width:100%;padding:10px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;margin-top:.5rem;transition:opacity .15s}
 .btn-login:hover{opacity:.82}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
 .login-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center;min-height:18px}
 .login-theme{position:fixed;top:16px;right:16px}
 #loading-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
@@ -92,19 +93,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .size-tag.zero{text-decoration:line-through;opacity:.35}
 .esgotado-badge{position:absolute;top:8px;left:8px;background:var(--accent);color:var(--accent-fg);font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase;z-index:3}
 .new-badge{position:absolute;top:8px;right:8px;background:#9a9a94;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;z-index:3}
-/* Fullscreen image overlay */
-.fs-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);align-items:center;justify-content:center}
-.fs-overlay.open{display:flex}
-.fs-overlay img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:6px}
-.fs-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;opacity:.8}
-.fs-close:hover{opacity:1}
-.fs-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
-.fs-arrow:hover{background:rgba(255,255,255,.3)}
-.fs-arrow.prev{left:16px}
-.fs-arrow.next{right:16px}
-/* Expand button on detail modal */
-.img-expand-btn{position:absolute;bottom:8px;right:8px;z-index:5;width:28px;height:28px;background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.85}
-.img-expand-btn:hover{opacity:1}
 .pcard-actions{display:flex;gap:5px;padding:0 14px 12px;flex-wrap:wrap}
 .empty{text-align:center;padding:4rem 1rem;color:var(--text-2)}
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
@@ -145,7 +133,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-2);line-height:1}
 .modal-err{font-size:12px;color:var(--red);margin-top:6px;min-height:16px}
 .img-hint{font-size:11px;color:var(--text-3);margin-top:4px}
-.section-divider{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
 .settings-tabs{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .stab{padding:6px 12px;font-size:12px;border:none;background:none;font-family:inherit;cursor:pointer;color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s,border-color .12s}
 .stab.active{color:var(--text);border-bottom-color:var(--accent)}
@@ -161,7 +148,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .client-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
 .client-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .client-card-name{font-weight:500;font-size:14px}
-.log-.log-table th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.log-table{width:100%;border-collapse:collapse;font-size:13px}
+.log-table th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
 .log-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
 .detail-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:720px;position:relative;overflow:hidden;padding:0}
 .detail-main-img{position:relative;height:360px;overflow:hidden;background:var(--surface2)}
@@ -173,17 +161,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .detail-thumb.active{opacity:1;border-color:var(--accent)}
 .detail-body{padding:1.5rem}
 .detail-close{position:absolute;top:12px;right:12px;z-index:10;width:30px;height:30px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.img-expand-btn{position:absolute;bottom:8px;right:8px;z-index:5;width:28px;height:28px;background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.85}
+.img-expand-btn:hover{opacity:1}
+.fs-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);align-items:center;justify-content:center}
+.fs-overlay.open{display:flex}
+.fs-overlay img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:6px}
+.fs-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;opacity:.8}
+.fs-close:hover{opacity:1}
+.fs-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.fs-arrow:hover{background:rgba(255,255,255,.3)}
+.fs-arrow.prev{left:16px}
+.fs-arrow.next{right:16px}
 @media(max-width:720px){.sidebar{display:none}.sidebar.mobile-open{display:flex;position:fixed;top:54px;left:0;height:calc(100vh - 54px);z-index:40;width:260px}.mobile-filter-btn{display:flex !important}.detail-main-img{height:220px}}
 .mobile-filter-btn{display:none}
 @media(max-width:520px){.mrow-2{grid-template-columns:1fr}}
-
-/* ── MOBILE OPTIMIZATIONS ───────────────────────────────── */
 @media(max-width:600px){
-  /* 2 products per row */
-  .grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-top:1rem;padding:0}
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-top:1rem}
   .content{padding:10px 10px 80px}
-
-  /* Compact card */
   .pcard-body{padding:8px 10px}
   .pcard-cat{font-size:10px;margin-bottom:2px}
   .pcard-nome{font-size:12px;margin-bottom:2px;line-height:1.25}
@@ -195,67 +189,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .sizes-row{gap:3px;margin-bottom:6px}
   .size-tag{font-size:10px;padding:1px 5px}
   .esgotado-badge{font-size:9px;padding:2px 6px;top:5px;left:5px}
+  .new-badge{font-size:9px;padding:2px 6px;top:5px;right:5px}
   .pcard-actions{padding:0 8px 8px;gap:4px}
   .pcard-actions .btn{font-size:11px;padding:4px 7px}
-
-  /* Topnav */
   .topnav{padding:0 12px;height:50px}
   .nav-brand{font-size:14px}
   .role-tag{display:none}
   .nav-right{gap:6px}
-
-  /* Filters slide-up panel */
   .sidebar.mobile-open{width:100%;border-radius:16px 16px 0 0;top:auto;bottom:0;height:75vh;padding:1rem}
-
-  /* Tabs */
-  .tabs{gap:3px}
-  .tab{padding:5px 12px;font-size:12px}
-
-  /* Content topbar */
-  .content-topbar{margin-bottom:.75rem}
-  .content-topbar .btn{font-size:12px;padding:6px 12px}
-
-  /* Modal full screen */
   .modal-overlay{padding:.5rem .5rem 0}
   .modal{max-height:95vh;overflow-y:auto;border-radius:var(--radius) var(--radius) 0 0;padding:1.25rem 1rem}
-
-  /* Detail modal */
   .detail-modal{border-radius:16px 16px 0 0}
   .detail-main-img{height:260px}
   .detail-body{padding:1rem}
-  #detail-nome{font-size:18px}
-  #detail-preco{font-size:18px}
-
-
-  /* Image arrows always visible on mobile (no hover) */
   .img-arrow{opacity:.7}
-
-  /* Bigger touch targets for dots */
   .img-dot{width:7px;height:7px}
 }
 </style>
 </head>
 <body>
-
-<!-- LOADING -->
-<div id="loading-screen">
-  <div class="loading-spinner"></div>
-  <div style="font-size:13px;color:var(--text-2)">Loading catalogue...</div>
-</div>
-
-<!-- LOGIN -->
+<div id="loading-screen"><div class="loading-spinner"></div><div style="font-size:13px;color:var(--text-2)">Loading catalogue...</div></div>
 <div id="login-screen">
   <button class="theme-toggle login-theme" onclick="toggleTheme()">🌙</button>
   <div class="login-box">
     <div class="logo">Catalogue</div>
     <div class="subtitle">Enter your password to access</div>
     <div class="field"><label>Password</label><input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()"></div>
-    <button class="btn-login" onclick="tryLogin()">Sign in</button>
+    <button class="btn-login" id="login-btn" onclick="tryLogin()">Sign in</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
-
-<!-- APP -->
 <div id="app">
   <nav class="topnav">
     <div style="display:flex;align-items:center;gap:10px">
@@ -263,7 +226,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="nav-brand">Catalogue</div>
     </div>
     <div class="nav-right">
-      <span class="role-tag" id="role-tag">admin</span>
+      <span class="role-tag" id="role-tag"></span>
       <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
       <button class="btn sm" id="settings-btn" onclick="openSettings()">Settings</button>
       <button class="btn sm" onclick="logout()">Sign out</button>
@@ -303,25 +266,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="content">
       <div class="content-topbar">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          
           <button class="btn sm" id="reset-filters-btn" onclick="resetFilters()" style="display:none">✕ Reset filters</button>
         </div>
         <button class="btn dark" id="add-btn" onclick="openModal()" style="display:none">+ Add item</button>
       </div>
       <div id="product-grid" class="grid"></div>
-
     </div>
   </div>
 </div>
-
-<!-- FULLSCREEN IMAGE OVERLAY -->
+<!-- FULLSCREEN -->
 <div class="fs-overlay" id="fs-overlay" onclick="closeFsOverlay(event)">
   <button class="fs-close" onclick="document.getElementById('fs-overlay').classList.remove('open')">✕</button>
   <button class="fs-arrow prev" id="fs-prev" onclick="event.stopPropagation();fsSlide(-1)">&#8249;</button>
   <img id="fs-img" src="" alt="">
   <button class="fs-arrow next" id="fs-next" onclick="event.stopPropagation();fsSlide(1)">&#8250;</button>
 </div>
-
 <!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detail-overlay">
   <div class="detail-modal">
@@ -336,14 +295,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
       <div id="detail-cor" style="font-size:12px;color:var(--text-3);margin-bottom:10px"></div>
       <div id="detail-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px"></div>
-      <div id="detail-desc" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px"></div>
       <div id="detail-sizes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+      <div id="detail-desc" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px"></div>
       <div id="detail-ref" style="font-size:11px;color:var(--text-3)"></div>
       <div id="detail-admin-btns" style="display:none;gap:8px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)"></div>
     </div>
   </div>
 </div>
-
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -382,7 +340,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="mrow"><label>Description</label><textarea id="f-desc" placeholder="Material, notes..."></textarea></div>
     <div class="mrow">
       <label>Photos</label>
-      <div class="img-upload-zone" id="img-upload-zone" onclick="document.getElementById('f-img-input').click()">Click or drag images here (JPG, PNG, WEBP)<input type="file" id="f-img-input" accept="image/*" multiple style="display:none" onchange="handleImgs(event)"></div>
+      <div class="img-upload-zone" id="img-upload-zone" onclick="document.getElementById('f-img-input').click()">Click or drag images here<input type="file" id="f-img-input" accept="image/*" multiple style="display:none" onchange="handleImgs(event)"></div>
       <div class="img-thumbs-grid" id="img-thumbs-grid"></div>
       <div class="img-hint">Drag to reorder. First image is the cover.</div>
     </div>
@@ -395,13 +353,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
     <div class="mrow"><label class="check-row"><input type="checkbox" id="f-esgotado"> Mark as out of stock</label></div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn dark" onclick="saveProduct()">Save</button>
-    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn dark" onclick="saveProduct()">Save</button></div>
   </div>
 </div>
-
 <!-- SETTINGS -->
 <div class="modal-overlay" id="settings-overlay">
   <div class="modal" style="max-width:520px">
@@ -453,24 +407,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div style="max-height:360px;overflow-y:auto" id="skus-list"></div>
     </div>
     <div class="stab-panel" id="stab-security">
-      <div class="mrow"><label>New admin password</label><input type="password" id="new-pw" placeholder="New password"></div>
-      <div class="mrow"><label>Confirm</label><input type="password" id="confirm-pw" placeholder="Repeat"></div>
-      <div class="modal-err" id="pw-err"></div>
-      <div class="modal-footer" style="margin-top:.5rem"><button class="btn dark" onclick="changePw()">Save password</button></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2)">
+        <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Passwords managed by Firebase</div>
+        <p>Passwords are validated securely by Firebase Authentication — never stored in this site's code.</p>
+        <p style="margin-top:8px">To change a password: go to <strong>console.firebase.google.com</strong> → Authentication → Users → find the user → Reset password.</p>
+        <p style="margin-top:8px">To add a new client: create a user in Firebase Authentication, then add their email in the <strong>Clients</strong> tab.</p>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
       <button class="btn" onclick="document.getElementById('settings-overlay').classList.remove('open')">Close</button>
     </div>
   </div>
 </div>
-
 <!-- CLIENT MODAL -->
 <div class="modal-overlay" id="client-modal">
   <div class="modal" style="max-width:460px">
     <button class="modal-close" onclick="document.getElementById('client-modal').classList.remove('open')">✕</button>
     <h2 id="client-modal-title">New client</h2>
     <div class="mrow"><label>Client name</label><input type="text" id="cl-name" placeholder="e.g. Boutique ABC"></div>
-    <div class="mrow"><label>Password</label><input type="text" id="cl-pw" placeholder="e.g. boutique123"></div>
+    <div class="mrow"><label>Email <span style="text-transform:none;font-size:11px;color:var(--text-3)">(same email registered in Firebase Authentication)</span></label><input type="email" id="cl-email" placeholder="client@email.com"></div>
     <div class="mrow">
       <label>Permissions</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
@@ -493,154 +448,104 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <script type="module">
-// ─── FIREBASE CONFIG ──────────────────────────────────────
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, getDocs, deleteDoc, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-var firebaseConfig = {
-  apiKey: "AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",
-  authDomain: "brands-catalogue.firebaseapp.com",
-  projectId: "brands-catalogue",
-  storageBucket: "brands-catalogue.firebasestorage.app",
-  messagingSenderId: "196830175467",
-  appId: "1:196830175467:web:7ede1c3cc72e849ade1eae"
-};
-var _fbApp = initializeApp(firebaseConfig);
-var _db = getFirestore(_fbApp);
+var firebaseConfig={apiKey:"AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",authDomain:"brands-catalogue.firebaseapp.com",projectId:"brands-catalogue",storageBucket:"brands-catalogue.firebasestorage.app",messagingSenderId:"196830175467",appId:"1:196830175467:web:7ede1c3cc72e849ade1eae"};
+var _fbApp=initializeApp(firebaseConfig);
+var _db=getFirestore(_fbApp);
+var _auth=getAuth(_fbApp);
 
-async function sbGet(table, key) {
-  try {
-    var snap = await getDoc(doc(_db, table, key));
-    return snap.exists() ? snap.data().value : null;
-  } catch(e) { console.error('fbGet error', e); return null; }
-}
-async function sbSet(table, key, value) {
-  try {
-    await setDoc(doc(_db, table, key), { value: value, updated_at: new Date().toISOString() });
-  } catch(e) { console.error('fbSet error', e); }
-}
-async function sbGetAllProducts() {
-  try {
-    var q = query(collection(_db, 'products'), orderBy('created_at', 'asc'));
-    var snap = await getDocs(q);
-    return snap.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
-  } catch(e) {
-    // fallback without ordering if index not ready
-    try {
-      var snap2 = await getDocs(collection(_db, 'products'));
-      return snap2.docs.map(function(d) { return Object.assign({}, d.data().data, { id: d.id }); });
-    } catch(e2) { console.error('fbGetAllProducts error', e2); return []; }
-  }
-}
-async function sbUpsertProduct(p) {
-  try {
-    await setDoc(doc(_db, 'products', String(p.id)), { data: p, created_at: p.createdAt || new Date().toISOString() }, { merge: true });
-  } catch(e) { console.error('fbUpsertProduct error', e); }
-}
-async function sbDeleteProduct(id) {
-  try {
-    await deleteDoc(doc(_db, 'products', String(id)));
-  } catch(e) { console.error('fbDeleteProduct error', e); }
-}
+// ── ADMIN EMAIL — change this if you used a different email ──
+var ADMIN_EMAIL='admin@catalogue.com';
 
-// ─── STATE ────────────────────────────────────────────────
-var ADMIN_PASS='admin123';
-var products=[];
-var brands=[];
-var globalTags=[];
-var subcats=[];
-var clients=[];
-var accessLogs=[];
-var _appReady=false; // guard: don't saveConfig before initApp loads data
+// ── FIRESTORE HELPERS ────────────────────────────────────────
+async function sbGet(t,k){try{var s=await getDoc(doc(_db,t,k));return s.exists()?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
+async function sbSet(t,k,v){try{await setDoc(doc(_db,t,k),{value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
+async function sbGetAllProducts(){
+  try{var q=query(collection(_db,'products'),orderBy('created_at','asc'));var s=await getDocs(q);return s.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
+  catch(e){try{var s2=await getDocs(collection(_db,'products'));return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}catch(e2){return[];}}
+}
+async function sbUpsertProduct(p){try{await setDoc(doc(_db,'products',String(p.id)),{data:p,created_at:p.createdAt||new Date().toISOString()},{merge:true});}catch(e){console.error('fbUpsert',e);}}
+async function sbDeleteProduct(id){try{await deleteDoc(doc(_db,'products',String(id)));}catch(e){console.error('fbDelete',e);}}
 
-var editingId=null,editingClientId=null;
-var tempSizes=[],tempImgs=[],tempTagIds=[];
+// ── STATE ────────────────────────────────────────────────────
+var products=[],brands=[],globalTags=[],subcats=[],clients=[],accessLogs=[];
+var _appReady=false;
+var editingId=null,editingClientId=null,tempImgs=[],tempTagIds=[],tempSizes=[];
 var dragSrcIdx=null,isAdmin=false,currentClient=null;
 var fCat='',fSubcat='',fBrand='',fSize='',fStock='',fTag='';
+var _fsImgs=[],_fsIdx=0,_currentDetailImgs=[];
 
-// ─── THEME ────────────────────────────────────────────────
+// ── THEME ────────────────────────────────────────────────────
 var savedTheme=localStorage.getItem('cat_theme')||'light';
 document.documentElement.setAttribute('data-theme',savedTheme);
 syncThemeIcons(savedTheme);
 function toggleTheme(){var n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('cat_theme',n);syncThemeIcons(n);}
 function syncThemeIcons(t){document.querySelectorAll('.theme-toggle').forEach(function(b){b.textContent=t==='dark'?'☀️':'🌙';});}
-
 function tagStyle(hex){return 'background:'+hex+';color:#1a1a18';}
-
 function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap';document.body.appendChild(t);}t.textContent=msg;t.style.background=isError?'#dc2626':'#16a34a';t.style.color='#fff';t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';},isError?3500:2200);}
 
-// ─── INIT: load all data from Supabase ────────────────────
-async function initApp(){
-  document.getElementById('loading-screen').classList.add('show');
-  try{
-    var cfg=await sbGet('app_config','settings');
-    if(cfg){
-      if(cfg.adminPass)ADMIN_PASS=cfg.adminPass;
-      if(cfg.brands)brands=cfg.brands;
-      if(cfg.globalTags)globalTags=cfg.globalTags;
-      if(cfg.subcats)subcats=cfg.subcats;
-      if(cfg.clients)clients=cfg.clients;
-      if(cfg.accessLogs)accessLogs=cfg.accessLogs;
-    }
-    products=await sbGetAllProducts();
-  }catch(e){showToast('Connection error — check your internet',true);console.error('initApp error',e);document.getElementById('loading-screen').classList.remove('show');document.getElementById('login-screen').style.display='flex';return;}
+// ── LOAD DATA ────────────────────────────────────────────────
+async function loadAppData(){
+  var cfg=await sbGet('app_config','settings');
+  if(cfg){if(cfg.brands)brands=cfg.brands;if(cfg.globalTags)globalTags=cfg.globalTags;if(cfg.subcats)subcats=cfg.subcats;if(cfg.clients)clients=cfg.clients;if(cfg.accessLogs)accessLogs=cfg.accessLogs;}
+  products=await sbGetAllProducts();
   _appReady=true;
-  document.getElementById('loading-screen').classList.remove('show');
-  // Try to restore session
-  if(!restoreSession()){
-    document.getElementById('login-screen').style.display='flex';
-  }
 }
 
+// ── SAVE CONFIG (queued to prevent race conditions) ──────────
 async function saveConfig(){
-  if(!_appReady){console.warn('saveConfig blocked: app not ready yet');return;}
-  saveConfig._queue=(saveConfig._queue||Promise.resolve()).then(async function(){
-    try{
-      await sbSet('app_config','settings',{adminPass:ADMIN_PASS,brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});
-    }catch(e){showToast('Save error — check connection',true);console.error('saveConfig error',e);}
+  if(!_appReady){console.warn('saveConfig blocked');return;}
+  saveConfig._q=(saveConfig._q||Promise.resolve()).then(async function(){
+    try{await sbSet('app_config','settings',{brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});}
+    catch(e){showToast('Save error — check connection',true);console.error('saveConfig',e);}
   });
-  return saveConfig._queue;
+  return saveConfig._q;
 }
 
-// ─── SESSION ──────────────────────────────────────────────
-var SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
-
-function saveSession(roleId){
-  localStorage.setItem('cat_session', JSON.stringify({roleId: roleId, ts: Date.now()}));
-}
-
-function clearSession(){
-  localStorage.removeItem('cat_session');
-}
-
-function restoreSession(){
-  try{
-    var raw = localStorage.getItem('cat_session');
-    if(!raw) return false;
-    var s = JSON.parse(raw);
-    if(!s || !s.ts || (Date.now() - s.ts) > SESSION_TTL){ clearSession(); return false; }
-    if(s.roleId === '__admin__'){
-      isAdmin=true; currentClient=null;
-      startApp('admin'); return true;
-    }
-    var cl = clients.find(function(c){ return c.id === s.roleId; });
-    if(!cl){ clearSession(); return false; }
-    isAdmin=false; currentClient=cl;
-    startApp(cl.name); return true;
-  }catch(e){ clearSession(); return false; }
-}
-
-// ─── LOGIN ────────────────────────────────────────────────
+// ── FIREBASE AUTH LOGIN ───────────────────────────────────────
+// Validates on Firebase servers — nobody can bypass from DevTools
 async function tryLogin(){
-  var v=document.getElementById('pw-input').value;
-  if(v===ADMIN_PASS){isAdmin=true;currentClient=null;saveSession('__admin__');logAccess('Admin');startApp('admin');return;}
-  var cl=clients.find(function(c){return c.pw===v;});
-  if(cl){isAdmin=false;currentClient=cl;saveSession(cl.id);logAccess(cl.name);startApp(cl.name);return;}
-  document.getElementById('login-err').textContent='Incorrect password.';
+  var pw=document.getElementById('pw-input').value.trim();
+  if(!pw){document.getElementById('login-err').textContent='Enter your password.';return;}
+  var btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='Signing in...';
+  document.getElementById('login-err').textContent='';
+  // Try admin email first, then all client emails
+  var emailsToTry=[ADMIN_EMAIL].concat(clients.map(function(c){return c.email;}).filter(Boolean));
+  var ok=false;
+  for(var i=0;i<emailsToTry.length;i++){
+    try{await signInWithEmailAndPassword(_auth,emailsToTry[i],pw);ok=true;break;}catch(e){}
+  }
+  btn.disabled=false;btn.textContent='Sign in';
+  if(!ok){document.getElementById('login-err').textContent='Incorrect password.';}
+  // onAuthStateChanged handles the rest
 }
+
+onAuthStateChanged(_auth,async function(user){
+  if(!user){
+    document.getElementById('loading-screen').classList.remove('show');
+    document.getElementById('app').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    return;
+  }
+  document.getElementById('loading-screen').classList.add('show');
+  document.getElementById('login-screen').style.display='none';
+  try{await loadAppData();}
+  catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
+  document.getElementById('loading-screen').classList.remove('show');
+  if(user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()){
+    isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
+  }else{
+    var cl=clients.find(function(c){return c.email&&c.email.toLowerCase()===user.email.toLowerCase();});
+    if(cl){isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);}
+    else{showToast('No profile found for this account.',true);await signOut(_auth);}
+  }
+});
 
 function startApp(role){
-  document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('role-tag').textContent=role;
   document.getElementById('add-btn').style.display=isAdmin?'':'none';
@@ -648,40 +553,33 @@ function startApp(role){
   document.getElementById('stock-section').style.display=isAdmin?'':'none';
   populateCatSelect();updateBrandSelects();buildSidebarFilters();renderProducts();
 }
-
-function logout(){
-  clearSession();
-  document.getElementById('login-screen').style.display='flex';
+async function logout(){
+  isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
   document.getElementById('app').style.display='none';
   document.getElementById('pw-input').value='';
   document.getElementById('login-err').textContent='';
-  isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
+  await signOut(_auth);
 }
-
-async function logAccess(name){
+function logAccess(name){
   var now=new Date();function p(n){return String(n).padStart(2,'0');}
   var ts=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes())+':'+p(now.getSeconds());
-  accessLogs.unshift({name:name,ts:ts});
-  if(accessLogs.length>200)accessLogs=accessLogs.slice(0,200);
+  accessLogs.unshift({name:name,ts:ts});if(accessLogs.length>200)accessLogs=accessLogs.slice(0,200);
   saveConfig().catch(function(e){console.warn('logAccess save failed',e);});
 }
 
 function toggleMobileSidebar(){document.getElementById('sidebar').classList.toggle('mobile-open');}
-function toggleFilter(bodyId,caretId){var b=document.getElementById(bodyId);var c=document.getElementById(caretId);if(!b)return;b.classList.toggle('open');if(c)c.classList.toggle('open');}
+function toggleFilter(b,c){var el=document.getElementById(b);var ce=document.getElementById(c);if(!el)return;el.classList.toggle('open');if(ce)ce.classList.toggle('open');}
 
-// ─── SIDEBAR FILTERS ──────────────────────────────────────
+// ── SIDEBAR FILTERS ──────────────────────────────────────────
 function buildSidebarFilters(){
   var cats=['Clothing','Footwear','Accessories'];
-  var catCounts={};cats.forEach(function(c){catCounts[c]=products.filter(function(p){return p.cat===c;}).length;});
-  var catHtml=fi('All','',fCat,"setF('cat','',this)",products.length);
+  var cc={};cats.forEach(function(c){cc[c]=products.filter(function(p){return p.cat===c;}).length;});
+  var ch=fi('All','',fCat,"setF('cat','',this)",products.length);
   cats.forEach(function(c){
-    catHtml+=fi(c,c,fCat,"setF('cat','"+c+"',this)",catCounts[c]);
-    subcats.filter(function(s){return s.parent===c;}).forEach(function(s){
-      var cnt=products.filter(function(p){return p.subcat===s.id;}).length;
-      catHtml+='<div class="sfilter-item sfilter-sub'+(fSubcat===s.id?' active':'')+'" onclick="setSubF(\''+s.id+'\',this)">'+s.name+'<span class="count">'+cnt+'</span></div>';
-    });
+    ch+=fi(c,c,fCat,"setF('cat','"+c+"',this)",cc[c]);
+    subcats.filter(function(s){return s.parent===c;}).forEach(function(s){var cnt=products.filter(function(p){return p.subcat===s.id;}).length;ch+='<div class="sfilter-item sfilter-sub'+(fSubcat===s.id?' active':'')+'" onclick="setSubF(\''+s.id+'\',this)">'+s.name+'<span class="count">'+cnt+'</span></div>';});
   });
-  document.getElementById('cat-filter-list').innerHTML=catHtml;
+  document.getElementById('cat-filter-list').innerHTML=ch;
   var ub=[...new Set(products.map(function(p){return p.marca;}).filter(Boolean))];
   var bs=document.getElementById('brand-section');
   if(ub.length){bs.style.display='';var bc={};ub.forEach(function(b){bc[b]=products.filter(function(p){return p.marca===b;}).length;});document.getElementById('brand-filter-list').innerHTML=fi('All','',fBrand,"setF('brand','',this)",products.length)+ub.map(function(b){return fi(b,b,fBrand,"setF('brand','"+b+"',this)",bc[b]);}).join('');}else bs.style.display='none';
@@ -697,104 +595,75 @@ function buildSidebarFilters(){
   if(isAdmin){document.getElementById('stock-filter-list').innerHTML=fi('All','',fStock,"setF('stock','',this)")+fi('Available','available',fStock,"setF('stock','available',this)")+fi('Out of stock','outofstock',fStock,"setF('stock','outofstock',this)");}
 }
 function resetFilters(){fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';document.getElementById('search-box').value='';buildSidebarFilters();renderProducts();updateResetBtn();}
-function updateResetBtn(){var active=fCat||fSubcat||fBrand||fSize||fStock||fTag||(document.getElementById('search-box').value||'').trim();var btn=document.getElementById('reset-filters-btn');if(btn)btn.style.display=active?'':'none';}
-function fi(label,val,activeVal,onclick,count){var a=val===activeVal;var c=count!==undefined?'<span class="count">'+count+'</span>':'';return'<div class="sfilter-item'+(a?' active':'')+'" onclick="'+onclick+'">'+label+c+'</div>';}
+function updateResetBtn(){var a=fCat||fSubcat||fBrand||fSize||fStock||fTag||(document.getElementById('search-box').value||'').trim();var b=document.getElementById('reset-filters-btn');if(b)b.style.display=a?'':'none';}
+function fi(label,val,av,onclick,count){var a=val===av;var c=count!==undefined?'<span class="count">'+count+'</span>':'';return'<div class="sfilter-item'+(a?' active':'')+'" onclick="'+onclick+'">'+label+c+'</div>';}
 function setF(type,val,el){if(type==='cat'){fCat=val;fSubcat='';}else if(type==='brand')fBrand=val;else if(type==='size')fSize=val;else if(type==='stock')fStock=val;else if(type==='tag')fTag=val;var lid={cat:'cat-filter-list',brand:'brand-filter-list',size:'size-filter-list',stock:'stock-filter-list',tag:'tag-filter-list'}[type];document.querySelectorAll('#'+lid+' .sfilter-item').forEach(function(x){x.classList.remove('active');});el.classList.add('active');updateResetBtn();renderProducts();}
 function setSubF(id,el){fSubcat=id;fCat='';document.querySelectorAll('#cat-filter-list .sfilter-item').forEach(function(x){x.classList.remove('active');});el.classList.add('active');updateResetBtn();renderProducts();}
-
 function visibleTags(){if(isAdmin)return globalTags;if(!currentClient)return globalTags;if(!currentClient.showTags)return[];if(!currentClient.visibleTagIds||currentClient.visibleTagIds.length===0)return globalTags;return globalTags.filter(function(t){return currentClient.visibleTagIds.includes(t.id);});}
 function getFiltered(){var s=(document.getElementById('search-box').value||'').toLowerCase();return products.filter(function(p){var ms=!s||p.nome.toLowerCase().includes(s)||(p.ref||'').toLowerCase().includes(s)||(p.marca||'').toLowerCase().includes(s)||(p.desc||'').toLowerCase().includes(s);var mc=!fCat||p.cat===fCat;var msc=!fSubcat||p.subcat===fSubcat;var mb=!fBrand||p.marca===fBrand;var msz=!fSize||(p.sizes||[]).some(function(x){return x.size===fSize&&x.qty>0;});var mst=!fStock||(fStock==='outofstock'?p.esgotado:!p.esgotado);var mtg=!fTag||(p.tagIds||[]).includes(fTag);return ms&&mc&&msc&&mb&&msz&&mst&&mtg;});}
-function renderProducts(){var list=getFiltered();renderGrid(list);}
+function renderProducts(){renderGrid(getFiltered());}
 
-// ─── CARD RENDERING ───────────────────────────────────────
+// ── CARD RENDERING ───────────────────────────────────────────
 function cardImgHtml(p){var imgs=p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[]);if(!imgs.length)return'<div class="pcard-img-wrap"><div class="noimg">🧥</div></div>';var dots=imgs.length>1?'<div class="img-nav">'+imgs.map(function(_,i){return'<button class="img-dot'+(i===0?' active':'')+'" onclick="event.stopPropagation();slideImg(this,'+i+')"></button>';}).join('')+'</div>':'';var arrows=imgs.length>1?'<button class="img-arrow prev" onclick="event.stopPropagation();slideDir(this,-1)">&#8249;</button><button class="img-arrow next" onclick="event.stopPropagation();slideDir(this,1)">&#8250;</button>':'';return'<div class="pcard-img-wrap">'+imgs.map(function(src,i){return'<img src="'+src+'" class="'+(i===0?'active':'')+'">';}).join('')+dots+arrows+'</div>';}
 function slideImg(dotEl,idx){var w=dotEl.closest('.pcard-img-wrap');w.querySelectorAll('img').forEach(function(img,i){img.classList.toggle('active',i===idx);});w.querySelectorAll('.img-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});}
 function slideDir(arrowEl,dir){var w=arrowEl.closest('.pcard-img-wrap');var imgs=w.querySelectorAll('img');var dots=w.querySelectorAll('.img-dot');var cur=[...imgs].findIndex(function(img){return img.classList.contains('active');});var next=(cur+dir+imgs.length)%imgs.length;imgs.forEach(function(img,i){img.classList.toggle('active',i===next);});dots.forEach(function(d,i){d.classList.toggle('active',i===next);});}
 function buildTagsHtml(p){var vtIds=visibleTags().map(function(t){return t.id;});var tags=(p.tagIds||[]).map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).filter(function(t){return vtIds.includes(t.id);});if(!tags.length)return'';return'<div class="pcard-tags">'+tags.map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join('')+'</div>';}
-
-function groupSizesByPrice(sizes,defaultPreco,showPrice){
-  var groups={};
-  sizes.forEach(function(s){var p=s.preco&&s.preco!==''?parseFloat(s.preco):(defaultPreco&&defaultPreco!==''?parseFloat(defaultPreco):null);var key=p!==null?p.toFixed(2):'none';if(!groups[key])groups[key]={price:p,sizes:[]};groups[key].sizes.push(s);});
-  var keys=Object.keys(groups).sort(function(a,b){if(a==='none')return 1;if(b==='none')return-1;return parseFloat(a)-parseFloat(b);});
-  var arr=keys.map(function(k){return{price:groups[k].price,sizes:groups[k].sizes};});
-  var distinct=keys.filter(function(k){return k!=='none';}).length;
-  return{groups:arr,multiPrice:showPrice&&distinct>1};
-}
-
-function isNew(p){if(!p.createdAt)return false;var d=Date.now()-new Date(p.createdAt).getTime();return d<14*24*60*60*1000;}
-
-function buildPriceRow(p,showPrice){
-  // Show price row if product has a main price OR a PVP (even without main price)
-  var hasPvp=p.pvp&&p.pvp!=='';
-  var hasPrice=p.preco&&p.preco!=='';
-  if(!showPrice)return'';
-  if(!hasPrice&&!hasPvp)return'';
-  var pvpVal=hasPvp?parseFloat(p.pvp):null;
-  var pvpStr='';
-  if(pvpVal!==null){
-    var pvpDisp=pvpVal%1===0?String(Math.round(pvpVal)):pvpVal.toFixed(2);
-    pvpStr='<span style="font-size:12px;font-weight:600;color:var(--red);margin-left:'+(hasPrice?'8px':'0')+'">PVP €'+pvpDisp+'</span>';
-  }
-  var priceStr=hasPrice?'<span style="font-size:15px;font-weight:500">€'+parseFloat(p.preco).toFixed(2)+'</span>':'';
-  return'<div class="pcard-preco" style="display:flex;align-items:baseline;flex-wrap:wrap;gap:2px">'+priceStr+pvpStr+'</div>';
-}
+function groupSizesByPrice(sizes,defaultPreco,showPrice){var groups={};sizes.forEach(function(s){var p=s.preco&&s.preco!==''?parseFloat(s.preco):(defaultPreco&&defaultPreco!==''?parseFloat(defaultPreco):null);var key=p!==null?p.toFixed(2):'none';if(!groups[key])groups[key]={price:p,sizes:[]};groups[key].sizes.push(s);});var keys=Object.keys(groups).sort(function(a,b){if(a==='none')return 1;if(b==='none')return-1;return parseFloat(a)-parseFloat(b);});var arr=keys.map(function(k){return{price:groups[k].price,sizes:groups[k].sizes};});var distinct=keys.filter(function(k){return k!=='none';}).length;return{groups:arr,multiPrice:showPrice&&distinct>1};}
+function isNew(p){if(!p.createdAt)return false;return Date.now()-new Date(p.createdAt).getTime()<14*24*60*60*1000;}
+function buildPriceRow(p,showPrice){var hasPvp=p.pvp&&p.pvp!=='';var hasPrice=p.preco&&p.preco!=='';if(!showPrice)return'';if(!hasPrice&&!hasPvp)return'';var pvpStr='';if(hasPvp){var pv=parseFloat(p.pvp);var pd=pv%1===0?String(Math.round(pv)):pv.toFixed(2);pvpStr='<span style="font-size:12px;font-weight:600;color:var(--red);margin-left:'+(hasPrice?'8px':'0')+'">PVP €'+pd+'</span>';}var priceStr=hasPrice?'<span style="font-size:15px;font-weight:500">€'+parseFloat(p.preco).toFixed(2)+'</span>':'';return'<div class="pcard-preco" style="display:flex;align-items:baseline;flex-wrap:wrap;gap:2px">'+priceStr+pvpStr+'</div>';}
 
 function renderGrid(list){
   var g=document.getElementById('product-grid');
   if(!list.length){g.innerHTML='<div class="empty"><p>No items found.</p></div>';return;}
-  // Sort: newest first (by createdAt desc), OOS always last
-  function byDateDesc(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);}
-  var avail=list.filter(function(p){return!p.esgotado;}).slice().sort(byDateDesc);
-  var oos=list.filter(function(p){return p.esgotado;}).slice().sort(byDateDesc);
+  function byDate(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);}
+  var avail=list.filter(function(p){return!p.esgotado;}).slice().sort(byDate);
+  var oos=list.filter(function(p){return p.esgotado;}).slice().sort(byDate);
   var sorted=avail.concat(oos);
   var showPrice=isAdmin||(currentClient&&currentClient.showPrice);
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
+  var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
   g.innerHTML=sorted.map(function(p){
     var imgHtml=cardImgHtml(p);
     var scName=p.subcat?(subcats.find(function(s){return s.id===p.subcat;})||{}).name||'':'';
     var catLabel=scName?p.cat+' · '+scName:p.cat;
-    // Sizes (before description)
     var sizesHtml='';
-    if(p.sizes&&p.sizes.length){var gResult=groupSizesByPrice(p.sizes,p.preco,showPrice);sizesHtml=gResult.groups.map(function(grp){var ss=grp.sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join('');var ps=gResult.multiPrice&&grp.price!==null?'<span style="font-size:11px;font-weight:500;color:var(--text);margin-left:4px">€'+grp.price.toFixed(2)+'</span>':'';return'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin-bottom:3px">'+ss+ps+'</div>';}).join('');}else{sizesHtml='<span style="font-size:12px;color:var(--text-3)">—</span>';}
+    if(p.sizes&&p.sizes.length){var gr=groupSizesByPrice(p.sizes,p.preco,showPrice);sizesHtml=gr.groups.map(function(grp){var ss=grp.sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join('');var ps=gr.multiPrice&&grp.price!==null?'<span style="font-size:11px;font-weight:500;color:var(--text);margin-left:4px">€'+grp.price.toFixed(2)+'</span>':'';return'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin-bottom:3px">'+ss+ps+'</div>';}).join('');}else{sizesHtml='<span style="font-size:12px;color:var(--text-3)">—</span>';}
     var priceRow=buildPriceRow(p,showPrice);
     var cor=p.cor?'<div class="pcard-cor">'+p.cor+'</div>':'';
     var tagsHtml=buildTagsHtml(p);
-    var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
     var desc=showDesc&&p.desc?'<div class="pcard-desc">'+p.desc+'</div>':'';
-    var pIsNew=isNew(p);
     var badge=p.esgotado?'<div class="esgotado-badge">Out of stock</div>':'';
-    var newBadge=pIsNew?'<div class="new-badge">NEW</div>':'';
+    var newBadge=isNew(p)?'<div class="new-badge">NEW</div>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
     var cursorStyle=p.esgotado?'cursor:default;':'';
-    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>':'';
+    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')">Del</button></div>':'';
     return'<div class="pcard'+(p.esgotado?' esgotado':'')+'" '+clickAttr+' style="'+cursorStyle+'">'+badge+newBadge+imgHtml+'<div class="pcard-body"><div class="pcard-cat">'+catLabel+'</div><div class="pcard-nome">'+p.nome+'</div>'+priceRow+cor+tagsHtml+'<div class="sizes-row">'+sizesHtml+'</div>'+desc+'</div>'+adminBtns+'</div>';
   }).join('');
 }
 
-// ─── FULLSCREEN IMAGE ─────────────────────────────────────
-var _fsImgs=[];var _fsIdx=0;var _currentDetailImgs=[];
-function openFullscreen(imgs,idx){_fsImgs=imgs;_fsIdx=idx||0;var el=document.getElementById('fs-img');el.src=_fsImgs[_fsIdx];document.getElementById('fs-prev').style.display=_fsImgs.length>1?'':'none';document.getElementById('fs-next').style.display=_fsImgs.length>1?'':'none';document.getElementById('fs-overlay').classList.add('open');}
+// ── FULLSCREEN ───────────────────────────────────────────────
+function openFullscreen(imgs,idx){_fsImgs=imgs;_fsIdx=idx||0;document.getElementById('fs-img').src=_fsImgs[_fsIdx];document.getElementById('fs-prev').style.display=_fsImgs.length>1?'':'none';document.getElementById('fs-next').style.display=_fsImgs.length>1?'':'none';document.getElementById('fs-overlay').classList.add('open');}
 function fsSlide(dir){_fsIdx=(_fsIdx+dir+_fsImgs.length)%_fsImgs.length;document.getElementById('fs-img').src=_fsImgs[_fsIdx];}
 function closeFsOverlay(e){if(e.target===document.getElementById('fs-overlay'))document.getElementById('fs-overlay').classList.remove('open');}
 
-// ─── DETAIL MODAL ─────────────────────────────────────────
+// ── DETAIL MODAL ─────────────────────────────────────────────
 function openDetail(id){
   var p=products.find(function(x){return String(x.id)===String(id);});if(!p)return;
   var showPrice=isAdmin||(currentClient&&currentClient.showPrice);
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
   var showSku=isAdmin||!currentClient||currentClient.showSku!==false;
+  var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
   var imgs=p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[]);
-  var mainWrap=document.getElementById('detail-main-img');
   _currentDetailImgs=imgs;
-  if(imgs.length){mainWrap.innerHTML=imgs.map(function(src,i){return'<img src="'+src+'" class="'+(i===0?'active':'')+'">';}).join('')+(imgs.length>1?'<button class="img-arrow prev" style="opacity:.85" onclick="detailSlide(-1)">&#8249;</button><button class="img-arrow next" style="opacity:.85" onclick="detailSlide(1)">&#8250;</button><div class="img-nav">'+imgs.map(function(_,i){return'<button class="img-dot'+(i===0?' active':'')+'" onclick="detailDot('+i+')"></button>';}).join('')+'</div>':'')+'<button class="img-expand-btn" title="Fullscreen" onclick="event.stopPropagation();openFullscreen(_currentDetailImgs,0)">⤢</button>';}else{mainWrap.innerHTML='<div class="noimg">🧥</div>';}
+  var mw=document.getElementById('detail-main-img');
+  if(imgs.length){mw.innerHTML=imgs.map(function(src,i){return'<img src="'+src+'" class="'+(i===0?'active':'')+'">';}).join('')+(imgs.length>1?'<button class="img-arrow prev" style="opacity:.85" onclick="detailSlide(-1)">&#8249;</button><button class="img-arrow next" style="opacity:.85" onclick="detailSlide(1)">&#8250;</button><div class="img-nav">'+imgs.map(function(_,i){return'<button class="img-dot'+(i===0?' active':'')+'" onclick="detailDot('+i+')"></button>';}).join('')+'</div>':'')+'<button class="img-expand-btn" onclick="event.stopPropagation();openFullscreen(_currentDetailImgs,0)">⤢</button>';}else{mw.innerHTML='<div class="noimg">🧥</div>';}
   var tw=document.getElementById('detail-thumbs');
   if(imgs.length>1){tw.style.display='flex';tw.innerHTML=imgs.map(function(src,i){return'<img src="'+src+'" class="detail-thumb'+(i===0?' active':'')+'" onclick="detailDot('+i+')">';}).join('');}else tw.style.display='none';
   var scName=p.subcat?(subcats.find(function(s){return s.id===p.subcat;})||{}).name||'':'';
   document.getElementById('detail-cat').textContent=scName?p.cat+' · '+scName:p.cat;
   document.getElementById('detail-nome').textContent=p.nome;
   document.getElementById('detail-cor').textContent=p.cor?'Colour: '+p.cor:'';
-  if(showPrice&&p.preco){var pvdv=p.pvp&&p.pvp!==''?parseFloat(p.pvp):null;var pvds='';if(pvdv!==null){var pvdf=pvdv%1===0?String(Math.round(pvdv)):pvdv.toFixed(2);pvds='<span style="font-size:13px;color:var(--red);margin-left:12px">PVP €'+pvdf+'</span>';}document.getElementById('detail-preco').innerHTML='€'+parseFloat(p.preco).toFixed(2)+pvds;}else{document.getElementById('detail-preco').textContent='';}
-  var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
+  if(showPrice){var hasPvp=p.pvp&&p.pvp!=='';var hasPrice=p.preco&&p.preco!=='';if(hasPrice||hasPvp){var pvds='';if(hasPvp){var pv=parseFloat(p.pvp);pvds='<span style="font-size:13px;color:var(--red);margin-left:12px">PVP €'+(pv%1===0?String(Math.round(pv)):pv.toFixed(2))+'</span>';}document.getElementById('detail-preco').innerHTML=(hasPrice?'€'+parseFloat(p.preco).toFixed(2):'')+pvds;}else document.getElementById('detail-preco').textContent='';}else document.getElementById('detail-preco').textContent='';
   document.getElementById('detail-desc').textContent=showDesc?(p.desc||''):'';
   document.getElementById('detail-ref').textContent=showSku&&p.ref?'SKU: '+p.ref:'';
   var vtIds=visibleTags().map(function(t){return t.id;});
@@ -804,20 +673,19 @@ function openDetail(id){
   document.getElementById('detail-sizes').innerHTML=sizes.length?sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'" style="font-size:13px;padding:5px 12px">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join(''):'<span style="font-size:13px;color:var(--text-3)">No sizes defined</span>';
   var ab=document.getElementById('detail-admin-btns');
   if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">Delete</button>';}else ab.style.display='none';
-  document.getElementById('detail-overlay').classList.add('open');
-  document.getElementById('detail-overlay').scrollTop=0;
+  document.getElementById('detail-overlay').classList.add('open');document.getElementById('detail-overlay').scrollTop=0;
 }
 function detailSlide(dir){var imgs=document.querySelectorAll('#detail-main-img img');var thumbs=document.querySelectorAll('.detail-thumb');var dots=document.querySelectorAll('#detail-main-img .img-dot');var cur=[...imgs].findIndex(function(img){return img.classList.contains('active');});var next=(cur+dir+imgs.length)%imgs.length;imgs.forEach(function(img,i){img.classList.toggle('active',i===next);});thumbs.forEach(function(t,i){t.classList.toggle('active',i===next);});dots.forEach(function(d,i){d.classList.toggle('active',i===next);});}
 function detailDot(idx){var imgs=document.querySelectorAll('#detail-main-img img');var thumbs=document.querySelectorAll('.detail-thumb');var dots=document.querySelectorAll('#detail-main-img .img-dot');imgs.forEach(function(img,i){img.classList.toggle('active',i===idx);});thumbs.forEach(function(t,i){t.classList.toggle('active',i===idx);});dots.forEach(function(d,i){d.classList.toggle('active',i===idx);});}
 
-// ─── BRAND / SUBCAT SELECTS ───────────────────────────────
+// ── SELECTS ──────────────────────────────────────────────────
 function updateBrandSelects(){var opts=brands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');var fm=document.getElementById('f-marca');if(fm)fm.innerHTML='<option value="">— No brand —</option>'+opts;}
 function populateCatSelect(){var sel=document.getElementById('f-cat');if(!sel)return;sel.innerHTML=['Clothing','Footwear','Accessories'].map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');updateSubcatSelect();}
 function updateSubcatSelect(){var cat=document.getElementById('f-cat').value;var sel=document.getElementById('f-subcat');sel.innerHTML='<option value="">— None —</option>'+subcats.filter(function(s){return s.parent===cat;}).map(function(s){return'<option value="'+s.id+'">'+s.name+'</option>';}).join('');}
 
-// ─── PRODUCT MODAL ────────────────────────────────────────
+// ── PRODUCT MODAL ────────────────────────────────────────────
 function openModal(id){
-  editingId=id||null;tempSizes=[];tempImgs=[];tempTagIds=[];
+  editingId=id||null;tempImgs=[];tempTagIds=[];tempSizes=[];
   populateCatSelect();updateBrandSelects();
   document.getElementById('modal-title').textContent=id?'Edit item':'Add item';
   document.getElementById('sku-err').textContent='';
@@ -827,47 +695,28 @@ function openModal(id){
     document.getElementById('f-ref').value=p.ref||'';document.getElementById('f-preco').value=p.preco||'';document.getElementById('f-pvp').value=p.pvp||'';document.getElementById('f-desc').value=p.desc||'';document.getElementById('f-cor').value=p.cor||'';
     document.getElementById('f-esgotado').checked=!!p.esgotado;document.getElementById('f-marca').value=p.marca||'';
     tempImgs=p.imgs?[...p.imgs]:(p.img?[p.img]:[]);tempSizes=(p.sizes||[]).map(function(s){return Object.assign({},s);});tempTagIds=[...(p.tagIds||[])];
-  }else{['f-nome','f-ref','f-preco','f-pvp','f-desc','f-cor'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('f-cat').value='Clothing';updateSubcatSelect();document.getElementById('f-marca').value='';document.getElementById('f-esgotado').checked=false;}
+  }else{
+    ['f-nome','f-ref','f-preco','f-pvp','f-desc','f-cor'].forEach(function(i){document.getElementById(i).value='';});
+    document.getElementById('f-cat').value='Clothing';updateSubcatSelect();document.getElementById('f-marca').value='';document.getElementById('f-esgotado').checked=false;
+  }
   renderTagPicker();renderImgThumbs();renderSizesEditor();
   document.getElementById('modal-overlay').classList.add('open');document.getElementById('modal-overlay').scrollTop=0;
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function checkSkuDuplicate(val){var v=(val||'').trim();var err=document.getElementById('sku-err');if(!v){err.textContent='';return false;}var conflict=products.find(function(p){return p.ref&&p.ref.trim().toLowerCase()===v.toLowerCase()&&String(p.id)!==String(editingId);});if(conflict){err.textContent='⚠ SKU already used by "'+conflict.nome+'"';return true;}err.textContent='';return false;}
 
-function checkSkuDuplicate(val){
-  var v=(val||'').trim();var err=document.getElementById('sku-err');
-  if(!v){err.textContent='';return false;}
-  var conflict=products.find(function(p){return p.ref&&p.ref.trim().toLowerCase()===v.toLowerCase()&&String(p.id)!==String(editingId);});
-  if(conflict){err.textContent='⚠ SKU already used by "'+conflict.nome+'"';return true;}
-  err.textContent='';return false;
-}
-
-// ─── TAGS ─────────────────────────────────────────────────
+// ── TAGS (read from DOM — module scope fix) ───────────────────
 function renderTagPicker(){
   document.getElementById('tag-picker-grid').innerHTML=globalTags.map(function(t){
     var sel=tempTagIds.includes(t.id);
-    return'<div class="tag-picker-item'+(sel?' selected':'')+'" data-tagid="'+t.id+'" onclick="toggleTagSel(this)" style="'+tagStyle(t.color)+'">'+t.label
-      +'<button class="tag-del-small" onclick="event.stopPropagation();deleteGlobalTag(\''+t.id+'\')" title="Delete">✕</button></div>';
+    return'<div class="tag-picker-item'+(sel?' selected':'')+'" data-tagid="'+t.id+'" onclick="toggleTagSel(this)" style="'+tagStyle(t.color)+'">'+t.label+'<button class="tag-del-small" onclick="event.stopPropagation();deleteGlobalTag(\''+t.id+'\')" title="Delete">✕</button></div>';
   }).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags yet.</span>';
 }
-function toggleTagSel(el){
-  var id=el.dataset.tagid;
-  var isSel=el.classList.contains('selected');
-  if(isSel){tempTagIds=tempTagIds.filter(function(x){return x!==id;});el.classList.remove('selected');}
-  else{tempTagIds.push(id);el.classList.add('selected');}
-}
+function toggleTagSel(el){var id=el.dataset.tagid;if(el.classList.contains('selected')){tempTagIds=tempTagIds.filter(function(x){return x!==id;});el.classList.remove('selected');}else{tempTagIds.push(id);el.classList.add('selected');}}
 async function createGlobalTag(){var label=document.getElementById('new-tag-input').value.trim();if(!label)return;var color=document.getElementById('new-tag-color').value;var id='tag_'+Date.now();globalTags.push({id:id,label:label,color:color});await saveConfig();document.getElementById('new-tag-input').value='';tempTagIds.push(id);renderTagPicker();buildSidebarFilters();}
-async function deleteGlobalTag(id){
-  globalTags=globalTags.filter(function(t){return t.id!==id;});
-  var affected=products.filter(function(p){return(p.tagIds||[]).includes(id);});
-  affected.forEach(function(p){p.tagIds=(p.tagIds||[]).filter(function(x){return x!==id;});});
-  tempTagIds=tempTagIds.filter(function(x){return x!==id;});
-  await saveConfig();
-  // Update affected products in parallel
-  await Promise.all(affected.map(function(p){return sbUpsertProduct(p);}));
-  renderTagPicker();buildSidebarFilters();renderProducts();renderGlobalTagsList();
-}
+async function deleteGlobalTag(id){globalTags=globalTags.filter(function(t){return t.id!==id;});var affected=products.filter(function(p){return(p.tagIds||[]).includes(id);});affected.forEach(function(p){p.tagIds=(p.tagIds||[]).filter(function(x){return x!==id;});});tempTagIds=tempTagIds.filter(function(x){return x!==id;});await saveConfig();await Promise.all(affected.map(function(p){return sbUpsertProduct(p);}));renderTagPicker();buildSidebarFilters();renderProducts();renderGlobalTagsList();}
 
-// ─── IMAGES ───────────────────────────────────────────────
+// ── IMAGES ───────────────────────────────────────────────────
 function handleImgs(e){var files=Array.from(e.target.files);var loaded=0;files.forEach(function(f){var r=new FileReader();r.onload=function(ev){tempImgs.push(ev.target.result);loaded++;if(loaded===files.length)renderImgThumbs();};r.readAsDataURL(f);});e.target.value='';}
 function renderImgThumbs(){var grid=document.getElementById('img-thumbs-grid');grid.innerHTML=tempImgs.map(function(src,i){return'<div class="img-thumb-item" draggable="true" ondragstart="dragStart(event,'+i+')" ondragover="dragOver(event,'+i+')" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'+i+')" ondragend="dragEnd()"><img src="'+src+'"><button class="thumb-del" onclick="removeImg('+i+')">✕</button>'+(i===0?'<span class="thumb-badge">Cover</span>':'')+'</div>';}).join('');var zone=document.getElementById('img-upload-zone');zone.ondragover=function(e){e.preventDefault();zone.classList.add('dragover');};zone.ondragleave=function(){zone.classList.remove('dragover');};zone.ondrop=function(e){e.preventDefault();zone.classList.remove('dragover');var files=Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/');});if(!files.length)return;var loaded=0;files.forEach(function(f){var r=new FileReader();r.onload=function(ev){tempImgs.push(ev.target.result);loaded++;if(loaded===files.length)renderImgThumbs();};r.readAsDataURL(f);});};}
 function removeImg(i){tempImgs.splice(i,1);renderImgThumbs();}
@@ -877,6 +726,7 @@ function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragDrop(e,i){e.preventDefault();if(dragSrcIdx===null||dragSrcIdx===i)return;var moved=tempImgs.splice(dragSrcIdx,1)[0];tempImgs.splice(i,0,moved);renderImgThumbs();}
 function dragEnd(){document.querySelectorAll('.img-thumb-item').forEach(function(el){el.classList.remove('dragging','drag-over');});dragSrcIdx=null;}
 
+// ── SIZES (read from DOM — module scope fix) ──────────────────
 function renderSizesEditor(){
   document.getElementById('sizes-editor').innerHTML=tempSizes.map(function(s,i){
     var pv=s.preco!==undefined&&s.preco!==''?s.preco:'';
@@ -888,63 +738,37 @@ function renderSizesEditor(){
       +'</div>';
   }).join('');
 }
-function readSizesFromDOM(){
-  return Array.from(document.querySelectorAll('#sizes-editor .size-row-edit')).map(function(row){
-    return{size:row.querySelector('[data-field="size"]').value.trim(),qty:parseInt(row.querySelector('[data-field="qty"]').value)||0,preco:row.querySelector('[data-field="preco"]').value};
-  }).filter(function(s){return s.size;});
-}
-function updateAutoOOS(){
-  var sizes=readSizesFromDOM();
-  if(sizes.length>0&&sizes.every(function(s){return s.qty<=0;})){document.getElementById('f-esgotado').checked=true;}
-  else if(sizes.some(function(s){return s.qty>0;})){document.getElementById('f-esgotado').checked=false;}
-}
+function readSizesFromDOM(){return Array.from(document.querySelectorAll('#sizes-editor .size-row-edit')).map(function(row){return{size:row.querySelector('[data-field="size"]').value.trim(),qty:parseInt(row.querySelector('[data-field="qty"]').value)||0,preco:row.querySelector('[data-field="preco"]').value};}).filter(function(s){return s.size;});}
+function updateAutoOOS(){var sizes=readSizesFromDOM();if(sizes.length>0&&sizes.every(function(s){return s.qty<=0;})){document.getElementById('f-esgotado').checked=true;}else if(sizes.some(function(s){return s.qty>0;})){document.getElementById('f-esgotado').checked=false;}}
 function removeSizeAt(i){tempSizes.splice(i,1);renderSizesEditor();}
-function addSize(){var v=document.getElementById('new-size-input').value.trim();if(!v)return;tempSizes.push({size:v,qty:0});document.getElementById('new-size-input').value='';renderSizesEditor();}
+function addSize(){var v=document.getElementById('new-size-input').value.trim();if(!v)return;tempSizes.push({size:v,qty:0,preco:''});document.getElementById('new-size-input').value='';renderSizesEditor();}
 
-// ─── SAVE / DELETE / DUPLICATE ────────────────────────────
+// ── SAVE / DELETE / DUPLICATE ────────────────────────────────
 async function saveProduct(){
   var nome=document.getElementById('f-nome').value.trim();if(!nome){alert('Please enter the item name.');return;}
-  if(checkSkuDuplicate(document.getElementById('f-ref').value)){showToast('SKU already in use — choose a different one',true);return;}
-  var now=new Date().toISOString();
+  if(checkSkuDuplicate(document.getElementById('f-ref').value)){showToast('SKU already in use',true);return;}
   var filteredSizes=readSizesFromDOM();
-  // Read tags from DOM (module scope issue)
   var tagIds=Array.from(document.querySelectorAll('#tag-picker-grid .tag-picker-item.selected')).map(function(el){return el.dataset.tagid;});
-  // Auto OOS: if all sizes have qty 0, mark as out of stock
   var manualOOS=document.getElementById('f-esgotado').checked;
   var autoOOS=filteredSizes.length>0&&filteredSizes.every(function(s){return s.qty<=0;});
-  var esgotado=manualOOS||autoOOS;
-  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:esgotado,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:filteredSizes,tagIds:tagIds};
+  var now=new Date().toISOString();
+  var p={id:editingId||String(Date.now()),nome:nome,cat:document.getElementById('f-cat').value,subcat:document.getElementById('f-subcat').value,marca:document.getElementById('f-marca').value,ref:document.getElementById('f-ref').value.trim(),preco:document.getElementById('f-preco').value,pvp:document.getElementById('f-pvp').value,desc:document.getElementById('f-desc').value.trim(),cor:document.getElementById('f-cor').value.trim(),esgotado:manualOOS||autoOOS,imgs:[...tempImgs],img:tempImgs[0]||'',sizes:filteredSizes,tagIds:tagIds};
   if(!editingId)p.createdAt=now;
-  else{var existing=products.find(function(x){return String(x.id)===String(editingId);});if(existing&&existing.createdAt)p.createdAt=existing.createdAt;}
-  if(editingId){var idx=products.findIndex(function(x){return String(x.id)===String(editingId);});if(idx>=0)products[idx]=p;else products.push(p);}else{products.push(p);}
+  else{var ex=products.find(function(x){return String(x.id)===String(editingId);});if(ex&&ex.createdAt)p.createdAt=ex.createdAt;}
+  if(editingId){var idx=products.findIndex(function(x){return String(x.id)===String(editingId);});if(idx>=0)products[idx]=p;else products.push(p);}else products.push(p);
   closeModal();buildSidebarFilters();renderProducts();
-  showToast('Saving...');
-  await sbUpsertProduct(p);
-  showToast(editingId?'Item updated ✓':'Item saved ✓');
+  showToast('Saving...');await sbUpsertProduct(p);showToast(editingId?'Item updated ✓':'Item saved ✓');
 }
-async function deleteProduct(id){
-  if(!confirm('Are you sure you want to delete this item?'))return;
-  products=products.filter(function(x){return String(x.id)!==String(id);});
-  buildSidebarFilters();renderProducts();
-  await sbDeleteProduct(id);
-  showToast('Deleted');
-}
-async function duplicateProduct(id){
-  var src=products.find(function(x){return String(x.id)===String(id);});if(!src)return;
-  var copy=Object.assign({},src,{id:String(Date.now()),nome:src.nome+' (copy)',sizes:(src.sizes||[]).map(function(s){return Object.assign({},s);}),imgs:[...(src.imgs||[])],img:src.img||'',tagIds:[...(src.tagIds||[])]});
-  products.push(copy);buildSidebarFilters();renderProducts();
-  await sbUpsertProduct(copy);
-  showToast('Duplicated ✓');
-}
+async function deleteProduct(id){if(!confirm('Delete this item?'))return;products=products.filter(function(x){return String(x.id)!==String(id);});buildSidebarFilters();renderProducts();await sbDeleteProduct(id);showToast('Deleted');}
+async function duplicateProduct(id){var src=products.find(function(x){return String(x.id)===String(id);});if(!src)return;var copy=Object.assign({},src,{id:String(Date.now()),nome:src.nome+' (copy)',sizes:(src.sizes||[]).map(function(s){return Object.assign({},s);}),imgs:[...(src.imgs||[])],img:src.img||'',tagIds:[...(src.tagIds||[])]});delete copy.createdAt;copy.createdAt=new Date().toISOString();products.push(copy);buildSidebarFilters();renderProducts();await sbUpsertProduct(copy);showToast('Duplicated ✓');}
 
-// ─── SETTINGS ─────────────────────────────────────────────
+// ── SETTINGS ─────────────────────────────────────────────────
 function openSettings(){renderBrandsList();renderGlobalTagsList();renderSubcatsList();renderClientsList();renderSkusList();renderLogsList();document.getElementById('settings-overlay').classList.add('open');}
 function switchStab(name,el){document.querySelectorAll('.stab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.stab-panel').forEach(function(x){x.classList.remove('active');});el.classList.add('active');document.getElementById('stab-'+name).classList.add('active');}
-
 function moveItem(arr,i,dir){if(i+dir<0||i+dir>=arr.length)return;var tmp=arr[i];arr[i]=arr[i+dir];arr[i+dir]=tmp;}
 
 function renderBrandsList(){document.getElementById('brands-list').innerHTML=brands.map(function(b,i){return'<div class="manage-row"><span class="label">'+b+'</span><button onclick="moveItem(brands,'+i+',-1);saveConfig();renderBrandsList();updateBrandSelects();buildSidebarFilters()">↑</button><button onclick="moveItem(brands,'+i+',1);saveConfig();renderBrandsList();updateBrandSelects();buildSidebarFilters()">↓</button><button onclick="removeBrand('+i+')">✕</button></div>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No brands added.</span>';}
-async function addBrand(){var inp=document.getElementById('new-brand-input');if(!inp)return;var v=inp.value.trim();if(!v){return;}if(brands.includes(v)){showToast('Brand already exists',true);return;}brands.push(v);inp.value='';renderBrandsList();updateBrandSelects();buildSidebarFilters();await saveConfig();showToast('Brand added ✓');}
+async function addBrand(){var v=document.getElementById('new-brand-input').value.trim();if(!v||brands.includes(v))return;brands.push(v);await saveConfig();document.getElementById('new-brand-input').value='';renderBrandsList();updateBrandSelects();buildSidebarFilters();showToast('Brand added ✓');}
 async function removeBrand(i){brands.splice(i,1);await saveConfig();renderBrandsList();updateBrandSelects();buildSidebarFilters();}
 
 function renderGlobalTagsList(){document.getElementById('global-tags-list').innerHTML=globalTags.map(function(t,i){return'<div class="manage-row"><span class="ptag" style="'+tagStyle(t.color)+';margin-right:8px;flex-shrink:0">'+t.label+'</span><input type="text" value="'+t.label+'" oninput="globalTags['+i+'].label=this.value;saveConfig();buildSidebarFilters();renderProducts()" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none"><input type="color" value="'+t.color+'" oninput="globalTags['+i+'].color=this.value;saveConfig();buildSidebarFilters();renderProducts();renderGlobalTagsList()" style="width:32px;height:28px;padding:2px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-left:4px"><button onclick="deleteGlobalTag(\''+t.id+'\')">✕</button></div>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created.</span>';}
@@ -954,98 +778,69 @@ function renderSubcatsList(){document.getElementById('subcats-list').innerHTML=s
 async function addSubcat(){var name=document.getElementById('new-subcat-name').value.trim();if(!name)return;var parent=document.getElementById('new-subcat-parent').value;subcats.push({id:'sc_'+Date.now(),name:name,parent:parent});await saveConfig();document.getElementById('new-subcat-name').value='';renderSubcatsList();buildSidebarFilters();showToast('Subcategory added ✓');}
 async function removeSubcat(i){subcats.splice(i,1);await saveConfig();renderSubcatsList();buildSidebarFilters();}
 
-function renderClientsList(){var el=document.getElementById('clients-list');var q=(document.getElementById('client-search')&&document.getElementById('client-search').value||'').toLowerCase();var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||c.pw.toLowerCase().includes(q);});if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}el.innerHTML=filtered.map(function(c){var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Password: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+c.pw+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';}).join('');}
-function openClientModal(id){editingClientId=id||null;var c=id?clients.find(function(x){return x.id===id;}):null;document.getElementById('client-modal-title').textContent=c?'Edit client':'New client';document.getElementById('cl-name').value=c?c.name:'';document.getElementById('cl-pw').value=c?c.pw:'';document.getElementById('cl-show-price').checked=c?!!c.showPrice:true;document.getElementById('cl-show-qty').checked=c?!!c.showQty:true;document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;document.getElementById('cl-show-sku').checked=c?(c.showSku!==false):true;document.getElementById('cl-show-desc').checked=c?(c.showDesc!==false):true;var selIds=c?(c.visibleTagIds||[]):[];document.getElementById('cl-tags-picker').innerHTML=globalTags.map(function(t){var sel=selIds.includes(t.id);return'<span class="ptag" data-id="'+t.id+'" data-sel="'+(sel?'1':'0')+'" style="'+tagStyle(t.color)+';cursor:pointer;border:2px solid '+(sel?'var(--accent)':'transparent')+';padding:3px 10px;border-radius:20px" onclick="toggleClientTag(this)">'+t.label+'</span>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created yet.</span>';document.getElementById('client-modal').classList.add('open');}
+function renderClientsList(){
+  var el=document.getElementById('clients-list');
+  var q=(document.getElementById('client-search')&&document.getElementById('client-search').value||'').toLowerCase();
+  var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q);});
+  if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}
+  el.innerHTML=filtered.map(function(c){
+    var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';
+    var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';
+    return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Email: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+(c.email||'—')+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';
+  }).join('');
+}
+function openClientModal(id){
+  editingClientId=id||null;var c=id?clients.find(function(x){return x.id===id;}):null;
+  document.getElementById('client-modal-title').textContent=c?'Edit client':'New client';
+  document.getElementById('cl-name').value=c?c.name:'';
+  document.getElementById('cl-email').value=c?c.email||'':'';
+  document.getElementById('cl-show-price').checked=c?!!c.showPrice:true;
+  document.getElementById('cl-show-qty').checked=c?!!c.showQty:true;
+  document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;
+  document.getElementById('cl-show-sku').checked=c?(c.showSku!==false):true;
+  document.getElementById('cl-show-desc').checked=c?(c.showDesc!==false):true;
+  var selIds=c?(c.visibleTagIds||[]):[];
+  document.getElementById('cl-tags-picker').innerHTML=globalTags.map(function(t){var sel=selIds.includes(t.id);return'<span class="ptag" data-id="'+t.id+'" data-sel="'+(sel?'1':'0')+'" style="'+tagStyle(t.color)+';cursor:pointer;border:2px solid '+(sel?'var(--accent)':'transparent')+';padding:3px 10px;border-radius:20px" onclick="toggleClientTag(this)">'+t.label+'</span>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created yet.</span>';
+  document.getElementById('client-modal').classList.add('open');
+}
 function toggleClientTag(el){var sel=el.dataset.sel==='1';el.dataset.sel=sel?'0':'1';el.style.border='2px solid '+(sel?'transparent':'var(--accent)');}
-async function saveClient(){var name=document.getElementById('cl-name').value.trim(),pw=document.getElementById('cl-pw').value.trim();if(!name||!pw){alert('Name and password are required.');return;}var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});var c={id:editingClientId||'cl_'+Date.now(),name:name,pw:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');}
+async function saveClient(){
+  var name=document.getElementById('cl-name').value.trim(),email=document.getElementById('cl-email').value.trim().toLowerCase();
+  if(!name||!email){alert('Name and email are required.');return;}
+  var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});
+  var c={id:editingClientId||'cl_'+Date.now(),name:name,email:email,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};
+  if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);
+  await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');
+}
 async function removeClient(id){if(!confirm('Delete this client?'))return;clients=clients.filter(function(x){return x.id!==id;});await saveConfig();renderClientsList();}
 
 function renderSkusList(){var el=document.getElementById('skus-list');var used=products.filter(function(p){return p.ref&&p.ref.trim();}).map(function(p){return{sku:p.ref,nome:p.nome};});used.sort(function(a,b){return a.sku.localeCompare(b.sku);});if(!used.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3)">No SKUs assigned yet.</p>';return;}el.innerHTML='<table class="log-table"><thead><tr><th>SKU</th><th>Product</th></tr></thead><tbody>'+used.map(function(u){return'<tr><td><code style="font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:3px">'+u.sku+'</code></td><td style="color:var(--text-2)">'+u.nome+'</td></tr>';}).join('')+'</tbody></table>';}
-
 function renderLogsList(){var el=document.getElementById('logs-list');if(!accessLogs.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3)">No logins recorded yet.</p>';return;}el.innerHTML='<table class="log-table"><thead><tr><th>User</th><th>Date &amp; Time</th></tr></thead><tbody>'+accessLogs.map(function(l){return'<tr><td style="font-weight:500">'+l.name+'</td><td style="color:var(--text-2)">'+l.ts+'</td></tr>';}).join('')+'</tbody></table>';}
 async function clearLogs(){if(!confirm('Clear all access logs?'))return;accessLogs=[];await saveConfig();renderLogsList();}
 
-async function changePw(){var np=document.getElementById('new-pw').value,cp=document.getElementById('confirm-pw').value;var err=document.getElementById('pw-err');if(!np){err.textContent='Please enter a new password.';return;}if(np.length<6){err.textContent='Minimum 6 characters.';return;}if(np!==cp){err.textContent='Passwords do not match.';return;}ADMIN_PASS=np;await saveConfig();err.textContent='';document.getElementById('new-pw').value='';document.getElementById('confirm-pw').value='';showToast('Password changed ✓');}
+// ── EXPOSE TO GLOBAL (required for type="module") ────────────
+window.tryLogin=tryLogin;window.toggleTheme=toggleTheme;window.logout=logout;
+window.openSettings=openSettings;window.switchStab=switchStab;
+window.toggleFilter=toggleFilter;window.toggleMobileSidebar=toggleMobileSidebar;
+window.setF=setF;window.setSubF=setSubF;window.resetFilters=resetFilters;window.updateResetBtn=updateResetBtn;
+window.openModal=openModal;window.closeModal=closeModal;window.saveProduct=saveProduct;
+window.deleteProduct=deleteProduct;window.duplicateProduct=duplicateProduct;window.openDetail=openDetail;
+window.detailSlide=detailSlide;window.detailDot=detailDot;
+window.openFullscreen=openFullscreen;window.fsSlide=fsSlide;window.closeFsOverlay=closeFsOverlay;
+window.slideImg=slideImg;window.slideDir=slideDir;
+window.renderTagPicker=renderTagPicker;window.toggleTagSel=toggleTagSel;window.createGlobalTag=createGlobalTag;window.deleteGlobalTag=deleteGlobalTag;
+window.addGlobalTagFromSettings=addGlobalTagFromSettings;window.renderGlobalTagsList=renderGlobalTagsList;
+window.handleImgs=handleImgs;window.removeImg=removeImg;window.dragStart=dragStart;window.dragOver=dragOver;window.dragLeave=dragLeave;window.dragDrop=dragDrop;window.dragEnd=dragEnd;
+window.renderSizesEditor=renderSizesEditor;window.readSizesFromDOM=readSizesFromDOM;window.updateAutoOOS=updateAutoOOS;window.removeSizeAt=removeSizeAt;window.addSize=addSize;window.checkSkuDuplicate=checkSkuDuplicate;
+window.addBrand=addBrand;window.removeBrand=removeBrand;window.renderBrandsList=renderBrandsList;window.moveItem=moveItem;window.updateBrandSelects=updateBrandSelects;window.buildSidebarFilters=buildSidebarFilters;window.saveConfig=saveConfig;
+window.addSubcat=addSubcat;window.removeSubcat=removeSubcat;window.renderSubcatsList=renderSubcatsList;window.updateSubcatSelect=updateSubcatSelect;
+window.openClientModal=openClientModal;window.saveClient=saveClient;window.removeClient=removeClient;window.toggleClientTag=toggleClientTag;window.renderClientsList=renderClientsList;
+window.clearLogs=clearLogs;window.renderLogsList=renderLogsList;window.renderSkusList=renderSkusList;window.renderProducts=renderProducts;
 
 document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('settings-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('client-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('detail-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
-
-
-// ─── EXPOSE TO GLOBAL SCOPE (required for type="module") ──
-window.tryLogin = tryLogin;
-window.saveSession = saveSession;
-window.clearSession = clearSession;
-window.restoreSession = restoreSession;
-window.toggleTheme = toggleTheme;
-window.logout = logout;
-window.openSettings = openSettings;
-window.switchStab = switchStab;
-window.addBrand = addBrand;
-window.removeBrand = removeBrand;
-window.renderBrandsList = renderBrandsList;
-window.moveItem = moveItem;
-window.saveConfig = saveConfig;
-window.updateBrandSelects = updateBrandSelects;
-window.buildSidebarFilters = buildSidebarFilters;
-window.addGlobalTagFromSettings = addGlobalTagFromSettings;
-window.deleteGlobalTag = deleteGlobalTag;
-window.addSubcat = addSubcat;
-window.removeSubcat = removeSubcat;
-window.openClientModal = openClientModal;
-window.saveClient = saveClient;
-window.removeClient = removeClient;
-window.toggleClientTag = toggleClientTag;
-window.clearLogs = clearLogs;
-window.changePw = changePw;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.saveProduct = saveProduct;
-window.deleteProduct = deleteProduct;
-window.duplicateProduct = duplicateProduct;
-window.openDetail = openDetail;
-window.openFullscreen = openFullscreen;
-window.fsSlide = fsSlide;
-window.closeFsOverlay = closeFsOverlay;
-window.detailSlide = detailSlide;
-window.detailDot = detailDot;
-window.toggleMobileSidebar = toggleMobileSidebar;
-window.toggleFilter = toggleFilter;
-window.resetFilters = resetFilters;
-window.setF = setF;
-window.setSubF = setSubF;
-window.renderTagPicker = renderTagPicker;
-window.toggleTagSel = toggleTagSel;
-window.createGlobalTag = createGlobalTag;
-window.handleImgs = handleImgs;
-window.removeImg = removeImg;
-window.dragStart = dragStart;
-window.dragOver = dragOver;
-window.dragLeave = dragLeave;
-window.dragDrop = dragDrop;
-window.dragEnd = dragEnd;
-window.addSize = addSize;
-window.checkSkuDuplicate = checkSkuDuplicate;
-window.slideImg = slideImg;
-window.slideDir = slideDir;
-window.renderGlobalTagsList = renderGlobalTagsList;
-window.renderSubcatsList = renderSubcatsList;
-window.renderBrandsList = renderBrandsList;
-window.renderClientsList = renderClientsList;
-window.renderSkusList = renderSkusList;
-window.renderLogsList = renderLogsList;
-window.updateSubcatSelect = updateSubcatSelect;
-window.renderSizesEditor = renderSizesEditor;
-window.readSizesFromDOM = readSizesFromDOM;
-window.updateAutoOOS = updateAutoOOS;
-window.toggleTagSel = toggleTagSel;
-window.renderProducts = renderProducts;
-window.updateResetBtn = updateResetBtn;
-window.removeSizeAt = removeSizeAt;
-
-// ─── START ────────────────────────────────────────────────
-initApp();
 </script>
 </body>
 </html>
