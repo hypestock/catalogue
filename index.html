@@ -490,9 +490,13 @@ function tagStyle(hex){return 'background:'+hex+';color:#1a1a18';}
 function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap';document.body.appendChild(t);}t.textContent=msg;t.style.background=isError?'#dc2626':'#16a34a';t.style.color='#fff';t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';},isError?3500:2200);}
 
 // ── LOAD CONFIG (clients needed before login) ────────────────
+var _configReady=false;
+var _configPromise=null;
+
 async function loadConfig(){
   var cfg=await sbGet('app_config','settings');
   if(cfg){if(cfg.brands)brands=cfg.brands;if(cfg.globalTags)globalTags=cfg.globalTags;if(cfg.subcats)subcats=cfg.subcats;if(cfg.clients)clients=cfg.clients;if(cfg.accessLogs)accessLogs=cfg.accessLogs;}
+  _configReady=true;
 }
 async function loadAppData(){
   await loadConfig();
@@ -517,6 +521,8 @@ async function tryLogin(){
   var btn=document.getElementById('login-btn');
   btn.disabled=true;btn.textContent='Signing in...';
   document.getElementById('login-err').textContent='';
+  // Ensure config (clients list) is fully loaded before attempting login
+  if(_configPromise){await _configPromise;}
   // Try admin email first, then all client emails
   var emailsToTry=[ADMIN_EMAIL].concat(clients.map(function(c){return c.email;}).filter(Boolean));
   var ok=false;
@@ -531,7 +537,8 @@ onAuthStateChanged(_auth,async function(user){
   if(!user){
     // Load clients so tryLogin can find the right email before auth
     document.getElementById('loading-screen').classList.add('show');
-    try{await loadConfig();}catch(e){console.warn('loadConfig error',e);}
+    _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
+    await _configPromise;
     document.getElementById('loading-screen').classList.remove('show');
     document.getElementById('app').style.display='none';
     document.getElementById('login-screen').style.display='flex';
