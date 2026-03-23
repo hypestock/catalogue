@@ -491,7 +491,7 @@ function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=
 
 // ── LOAD CONFIG (clients needed before login) ────────────────
 var _configReady=false;
-// Start loading config IMMEDIATELY — don't wait for onAuthStateChanged
+// Start immediately so clients are ready before user clicks Sign in
 var _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
 
 async function loadConfig(){
@@ -522,29 +522,31 @@ async function tryLogin(){
   var btn=document.getElementById('login-btn');
   btn.disabled=true;btn.textContent='Signing in...';
   document.getElementById('login-err').textContent='';
-  // Ensure config (clients list) is fully loaded before attempting login
-  if(_configPromise){await _configPromise;}
-  // Try admin email first, then all client emails
+  // Ensure clients list is loaded
+  await _configPromise;
+  // Try all known emails in parallel — first success wins
   var emailsToTry=[ADMIN_EMAIL].concat(clients.map(function(c){return c.email;}).filter(Boolean));
-  var ok=false;
-  for(var i=0;i<emailsToTry.length;i++){
-    try{await signInWithEmailAndPassword(_auth,emailsToTry[i],pw);ok=true;break;}catch(e){}
+  var results=await Promise.allSettled(
+    emailsToTry.map(function(email){
+      return signInWithEmailAndPassword(_auth,email,pw);
+    })
+  );
+  var ok=results.some(function(r){return r.status==='fulfilled';});
+  if(!ok){
+    btn.disabled=false;btn.textContent='Sign in';
+    document.getElementById('login-err').textContent='Incorrect password.';
   }
-  btn.disabled=false;btn.textContent='Sign in';
-  if(!ok){document.getElementById('login-err').textContent='Incorrect password.';}
+  // onAuthStateChanged handles the rest on success
 }
 
 onAuthStateChanged(_auth,async function(user){
   if(!user){
-    // Wait for config to finish loading (already started above)
-    document.getElementById('loading-screen').classList.add('show');
-    await _configPromise;
+    await _configPromise; // wait for clients to load
     document.getElementById('loading-screen').classList.remove('show');
     document.getElementById('app').style.display='none';
     document.getElementById('login-screen').style.display='flex';
     return;
   }
-  // Authenticated — load products (config already loaded)
   document.getElementById('loading-screen').classList.add('show');
   document.getElementById('login-screen').style.display='none';
   try{
