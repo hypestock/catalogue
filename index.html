@@ -566,7 +566,8 @@ async function tryLogin(){
 
 onAuthStateChanged(_auth,async function(user){
   if(!user){
-    // Load clients so tryLogin can find the right email before auth
+    // No Firebase session — show login screen
+    // Pre-load config so client passwords are available for tryLogin
     document.getElementById('loading-screen').classList.add('show');
     _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
     await _configPromise;
@@ -575,18 +576,21 @@ onAuthStateChanged(_auth,async function(user){
     document.getElementById('login-screen').style.display='flex';
     return;
   }
-  // Authenticated via Firebase — only admin reaches here
+  // Firebase session exists — must be admin
+  if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
+    showToast('Unauthorised account.',true);await signOut(_auth);return;
+  }
   document.getElementById('loading-screen').classList.add('show');
   document.getElementById('login-screen').style.display='none';
+  // Make sure config is loaded before loadAppData (in case onAuthStateChanged
+  // fired before _configPromise was set, e.g. on page reload with active session)
+  if(!_configReady){
+    try{await loadConfig();}catch(e){console.warn('loadConfig error',e);}
+  }
   try{await loadAppData();}
   catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
   document.getElementById('loading-screen').classList.remove('show');
-  if(user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()){
-    isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
-  }else{
-    // Non-admin Firebase user — not expected, reject
-    showToast('Unauthorised account.',true);await signOut(_auth);
-  }
+  isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
 });
 
 function startApp(role){
