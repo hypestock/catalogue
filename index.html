@@ -206,6 +206,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .img-dot{width:7px;height:7px}
 }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('cat_theme')||'light';
+  document.documentElement.setAttribute('data-theme',t);
+  function syncThemeIcons(t){document.querySelectorAll('.theme-toggle').forEach(function(b){b.textContent=t==='dark'?'☀️':'🌙';});}
+  function toggleTheme(){var n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('cat_theme',n);syncThemeIcons(n);}
+  window.toggleTheme=toggleTheme;
+  // Run once DOM is ready to sync icons
+  document.addEventListener('DOMContentLoaded',function(){syncThemeIcons(t);});
+})();
+</script>
 </head>
 <body>
 <div id="loading-screen"><div class="loading-spinner"></div><div style="font-size:13px;color:var(--text-2)">Loading catalogue...</div></div>
@@ -214,7 +225,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="login-box">
     <div class="logo">Catalogue</div>
     <div class="subtitle">Enter your password to access</div>
-    <div class="field"><label>Password</label><input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()"></div>
+    <div class="field"><label>Password</label><input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()" autocomplete="current-password"></div>
     <button class="btn-login" id="login-btn" onclick="tryLogin()">Sign in</button>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -409,14 +420,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div style="max-height:360px;overflow-y:auto" id="skus-list"></div>
     </div>
     <div class="stab-panel" id="stab-security">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2);margin-bottom:14px">
-        <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Admin login</div>
-        <p>The admin password is managed securely by <strong>Firebase Authentication</strong> — never visible in the page code.</p>
-        <p style="margin-top:8px">To change the admin password: <strong>console.firebase.google.com</strong> → Authentication → Users → Reset password.</p>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2)">
+        <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Access control</div>
+        <p><strong>Admin</strong> — authenticated via Firebase (email: <code style="background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">admin@catalogue.com</code>). To change the admin password, go to <strong>console.firebase.google.com</strong> → Authentication → Users.</p>
+        <p style="margin-top:8px"><strong>Clients</strong> — authenticated by a password set directly in the <strong>Clients</strong> tab. No email or Firebase account required. Each client uses only their password to log in.</p>
+        <p style="margin-top:8px">Make sure each client has a unique password to avoid conflicts.</p>
       </div>
-      <div class="mrow"><label>Admin email (Firebase Auth)</label><input type="email" id="admin-email-input" placeholder="admin@example.com"></div>
-      <div class="modal-footer" style="margin-top:.5rem"><button class="btn dark" onclick="saveAdminEmail()">Save email</button></div>
-      <div class="modal-err" id="admin-email-err"></div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
       <button class="btn" onclick="document.getElementById('settings-overlay').classList.remove('open')">Close</button>
@@ -429,7 +438,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="modal-close" onclick="document.getElementById('client-modal').classList.remove('open')">✕</button>
     <h2 id="client-modal-title">New client</h2>
     <div class="mrow"><label>Client name</label><input type="text" id="cl-name" placeholder="e.g. Boutique ABC"></div>
-    <div class="mrow"><label>Password</label><input type="text" id="cl-pw" placeholder="e.g. boutique123"></div>
+    <div class="mrow"><label>Password <span style="text-transform:none;font-size:11px;color:var(--text-3)">(used by client to access the catalogue)</span></label><input type="text" id="cl-password" placeholder="e.g. spring2025" autocomplete="off"></div>
     <div class="mrow">
       <label>Permissions</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
@@ -460,7 +469,9 @@ var firebaseConfig={apiKey:"AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",authDomain:
 var _fbApp=initializeApp(firebaseConfig);
 var _db=getFirestore(_fbApp);
 var _auth=getAuth(_fbApp);
-var ADMIN_EMAIL=''; // set dynamically from config
+
+// ── ADMIN EMAIL — change this if you used a different email ──
+var ADMIN_EMAIL='admin@catalogue.com';
 
 // ── FIRESTORE HELPERS ────────────────────────────────────────
 async function sbGet(t,k){try{var s=await getDoc(doc(_db,t,k));return s.exists()?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
@@ -480,104 +491,98 @@ var dragSrcIdx=null,isAdmin=false,currentClient=null;
 var fCat='',fSubcat='',fBrand='',fSize='',fStock='',fTag='';
 var _fsImgs=[],_fsIdx=0,_currentDetailImgs=[];
 
-// ── THEME ────────────────────────────────────────────────────
-var savedTheme=localStorage.getItem('cat_theme')||'light';
-document.documentElement.setAttribute('data-theme',savedTheme);
-syncThemeIcons(savedTheme);
-function toggleTheme(){var n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('cat_theme',n);syncThemeIcons(n);}
-function syncThemeIcons(t){document.querySelectorAll('.theme-toggle').forEach(function(b){b.textContent=t==='dark'?'☀️':'🌙';});}
+// theme handled by global script above
 function tagStyle(hex){return 'background:'+hex+';color:#1a1a18';}
 function showToast(msg,isError){var t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap';document.body.appendChild(t);}t.textContent=msg;t.style.background=isError?'#dc2626':'#16a34a';t.style.color='#fff';t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';},isError?3500:2200);}
 
 // ── LOAD CONFIG (clients needed before login) ────────────────
 var _configReady=false;
 var _configPromise=null;
-var SESSION_TTL=12*60*60*1000;
-
-function saveSession(roleId){localStorage.setItem('cat_session',JSON.stringify({roleId:roleId,ts:Date.now()}));}
-function clearSession(){localStorage.removeItem('cat_session');}
-function restoreSession(){
-  try{
-    var raw=localStorage.getItem('cat_session');if(!raw)return false;
-    var s=JSON.parse(raw);if(!s||!s.ts||(Date.now()-s.ts)>SESSION_TTL){clearSession();return false;}
-    if(s.roleId==='__admin__'){isAdmin=true;currentClient=null;startApp('admin');return true;}
-    var cl=clients.find(function(c){return c.id===s.roleId;});
-    if(!cl){clearSession();return false;}
-    isAdmin=false;currentClient=cl;startApp(cl.name);return true;
-  }catch(e){clearSession();return false;}
-}
 
 async function loadConfig(){
   var cfg=await sbGet('app_config','settings');
-  if(cfg){if(cfg.adminEmail)ADMIN_EMAIL=cfg.adminEmail;if(cfg.brands)brands=cfg.brands;if(cfg.globalTags)globalTags=cfg.globalTags;if(cfg.subcats)subcats=cfg.subcats;if(cfg.clients)clients=cfg.clients;if(cfg.accessLogs)accessLogs=cfg.accessLogs;}
+  if(cfg){if(cfg.brands)brands=cfg.brands;if(cfg.globalTags)globalTags=cfg.globalTags;if(cfg.subcats)subcats=cfg.subcats;if(cfg.clients)clients=cfg.clients;if(cfg.accessLogs)accessLogs=cfg.accessLogs;}
   _configReady=true;
 }
-async function initApp(){
-  document.getElementById('loading-screen').classList.add('show');
-  _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
-  await _configPromise;
-  try{
-    products=await sbGetAllProducts();
-    _appReady=true;
-  }catch(e){showToast('Connection error',true);console.error('initApp error',e);}
-  document.getElementById('loading-screen').classList.remove('show');
-  if(!restoreSession()){
-    document.getElementById('login-screen').style.display='flex';
-  }
+async function loadAppData(){
+  await loadConfig();
+  products=await sbGetAllProducts();
+  _appReady=true;
 }
 
 // ── SAVE CONFIG (queued to prevent race conditions) ──────────
 async function saveConfig(){
   if(!_appReady){console.warn('saveConfig blocked');return;}
   saveConfig._q=(saveConfig._q||Promise.resolve()).then(async function(){
-    try{await sbSet('app_config','settings',{adminEmail:ADMIN_EMAIL,brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});}
+    try{await sbSet('app_config','settings',{brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});}
     catch(e){showToast('Save error — check connection',true);console.error('saveConfig',e);}
   });
   return saveConfig._q;
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────────
+// Admin → Firebase Auth (email+password via ADMIN_EMAIL)
+// Clients → password stored in client profile (no email needed)
 async function tryLogin(){
   var pw=document.getElementById('pw-input').value.trim();
   if(!pw){document.getElementById('login-err').textContent='Enter your password.';return;}
   var btn=document.getElementById('login-btn');
   btn.disabled=true;btn.textContent='Signing in...';
   document.getElementById('login-err').textContent='';
+  // Ensure config (clients list) is fully loaded before attempting login
   if(_configPromise){await _configPromise;}
-  // First: try client password (simple, local check)
-  var cl=clients.find(function(c){return c.pw&&c.pw===pw;});
-  if(cl){
-    isAdmin=false;currentClient=cl;
-    saveSession(cl.id);
-    logAccess(cl.name);
-    startApp(cl.name);
+
+  // 1) Try admin via Firebase
+  try{
+    await signInWithEmailAndPassword(_auth,ADMIN_EMAIL,pw);
+    // success → onAuthStateChanged handles the rest
     btn.disabled=false;btn.textContent='Sign in';
     return;
+  }catch(e){}
+
+  // 2) Try client by matching password stored in profile
+  var cl=clients.find(function(c){return c.password&&c.password===pw;});
+  if(cl){
+    // Client matched — bypass Firebase, load app directly
+    btn.disabled=false;btn.textContent='Sign in';
+    document.getElementById('loading-screen').classList.add('show');
+    document.getElementById('login-screen').style.display='none';
+    try{await loadAppData();}
+    catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');document.getElementById('login-screen').style.display='flex';return;}
+    document.getElementById('loading-screen').classList.remove('show');
+    isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);
+    return;
   }
-  // Then: try admin via Firebase Auth
-  if(ADMIN_EMAIL){
-    try{
-      await signInWithEmailAndPassword(_auth,ADMIN_EMAIL,pw);
-      // onAuthStateChanged will handle the rest
-      return;
-    }catch(e){
-      // wrong password or not admin
-    }
-  }
+
   btn.disabled=false;btn.textContent='Sign in';
   document.getElementById('login-err').textContent='Incorrect password.';
 }
 
 onAuthStateChanged(_auth,async function(user){
-  var btn=document.getElementById('login-btn');
-  if(!user)return; // no action needed, initApp handles the initial state
-  // Admin authenticated via Firebase
-  btn.disabled=false;btn.textContent='Sign in';
-  isAdmin=true;currentClient=null;
-  saveSession('__admin__');
-  logAccess('Admin');
-  startApp('admin');
+  if(!user){
+    // Load clients so tryLogin can find the right email before auth
+    document.getElementById('loading-screen').classList.add('show');
+    _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
+    await _configPromise;
+    document.getElementById('loading-screen').classList.remove('show');
+    document.getElementById('app').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    return;
+  }
+  // Authenticated via Firebase — only admin reaches here
+  document.getElementById('loading-screen').classList.add('show');
+  document.getElementById('login-screen').style.display='none';
+  try{await loadAppData();}
+  catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
+  document.getElementById('loading-screen').classList.remove('show');
+  if(user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()){
+    isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
+  }else{
+    // Non-admin Firebase user — not expected, reject
+    showToast('Unauthorised account.',true);await signOut(_auth);
+  }
 });
+
 function startApp(role){
   document.getElementById('app').style.display='block';
   document.getElementById('role-tag').textContent=role;
@@ -587,28 +592,13 @@ function startApp(role){
   populateCatSelect();updateBrandSelects();buildSidebarFilters();renderProducts();
 }
 async function logout(){
-  clearSession();
-  if(isAdmin){try{await signOut(_auth);}catch(e){}}
+  var wasAdmin=isAdmin;
   isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
   document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
   document.getElementById('pw-input').value='';
   document.getElementById('login-err').textContent='';
-}
-async function saveAdminEmail(){
-  var v=document.getElementById('admin-email-input').value.trim().toLowerCase();
-  var err=document.getElementById('admin-email-err');
-  if(!v||!v.includes('@')){err.textContent='Enter a valid email.';return;}
-  ADMIN_EMAIL=v;
-  await saveConfig();
-  err.textContent='';
-  showToast('Admin email saved ✓');
-}
-function openSettings(){
-  document.getElementById('admin-email-input').value=ADMIN_EMAIL||'';
-  document.getElementById('admin-email-err').textContent='';
-  renderBrandsList();renderGlobalTagsList();renderSubcatsList();renderClientsList();renderSkusList();renderLogsList();
-  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('login-screen').style.display='flex';
+  if(wasAdmin){await signOut(_auth);}
 }
 function logAccess(name){
   var now=new Date();function p(n){return String(n).padStart(2,'0');}
@@ -687,7 +677,7 @@ function renderGrid(list){
     var newBadge=isNew(p)?'<div class="new-badge">NEW</div>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
     var cursorStyle=p.esgotado?'cursor:default;':'';
-    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>':'';
+    var adminBtns=isAdmin?'<div class="pcard-actions" onclick="event.stopPropagation()"><button class="btn sm" onclick="openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\')">⧉</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\')">Del</button></div>':'';
     return'<div class="pcard'+(p.esgotado?' esgotado':'')+'" '+clickAttr+' style="'+cursorStyle+'">'+badge+newBadge+imgHtml+'<div class="pcard-body"><div class="pcard-cat">'+catLabel+'</div><div class="pcard-nome">'+p.nome+'</div>'+priceRow+cor+tagsHtml+'<div class="sizes-row">'+sizesHtml+'</div>'+fit+desc+'</div>'+adminBtns+'</div>';
   }).join('');
 }
@@ -724,7 +714,7 @@ function openDetail(id){
   document.getElementById('detail-sizes').innerHTML=sizes.length?sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'" style="font-size:13px;padding:5px 12px">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join(''):'<span style="font-size:13px;color:var(--text-3)">No sizes defined</span>';
   var fitEl=document.getElementById('detail-fit');if(fitEl){fitEl.textContent=p.fit||'';fitEl.style.display=p.fit?'':'none';}
   var ab=document.getElementById('detail-admin-btns');
-  if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Delete</button>';}else ab.style.display='none';
+  if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">Delete</button>';}else ab.style.display='none';
   document.getElementById('detail-overlay').classList.add('open');document.getElementById('detail-overlay').scrollTop=0;
 }
 function detailSlide(dir){var imgs=document.querySelectorAll('#detail-main-img img');var thumbs=document.querySelectorAll('.detail-thumb');var dots=document.querySelectorAll('#detail-main-img .img-dot');var cur=[...imgs].findIndex(function(img){return img.classList.contains('active');});var next=(cur+dir+imgs.length)%imgs.length;imgs.forEach(function(img,i){img.classList.toggle('active',i===next);});thumbs.forEach(function(t,i){t.classList.toggle('active',i===next);});dots.forEach(function(d,i){d.classList.toggle('active',i===next);});}
@@ -833,19 +823,19 @@ async function removeSubcat(i){subcats.splice(i,1);await saveConfig();renderSubc
 function renderClientsList(){
   var el=document.getElementById('clients-list');
   var q=(document.getElementById('client-search')&&document.getElementById('client-search').value||'').toLowerCase();
-  var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||(c.pw||'').toLowerCase().includes(q);});
+  var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||(c.password||'').toLowerCase().includes(q);});
   if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}
   el.innerHTML=filtered.map(function(c){
     var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';
     var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';
-    return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div></div><div style="font-size:12px;color:var(--text-2)">Password: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+(c.pw||'—')+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';
+    return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Password: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+(c.password||'—')+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';
   }).join('');
 }
 function openClientModal(id){
   editingClientId=id||null;var c=id?clients.find(function(x){return x.id===id;}):null;
   document.getElementById('client-modal-title').textContent=c?'Edit client':'New client';
   document.getElementById('cl-name').value=c?c.name:'';
-  document.getElementById('cl-pw').value=c?c.pw||'':'';
+  document.getElementById('cl-password').value=c?c.password||'':'';
   document.getElementById('cl-show-price').checked=c?!!c.showPrice:true;
   document.getElementById('cl-show-qty').checked=c?!!c.showQty:true;
   document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;
@@ -857,10 +847,14 @@ function openClientModal(id){
 }
 function toggleClientTag(el){var sel=el.dataset.sel==='1';el.dataset.sel=sel?'0':'1';el.style.border='2px solid '+(sel?'transparent':'var(--accent)');}
 async function saveClient(){
-  var name=document.getElementById('cl-name').value.trim(),pw=document.getElementById('cl-pw').value.trim();
-  if(!name||!pw){alert('Name and password are required.');return;}
+  var name=document.getElementById('cl-name').value.trim(),pw=document.getElementById('cl-password').value.trim();
+  if(!name){alert('Client name is required.');return;}
+  if(!pw){alert('Password is required.');return;}
+  // Check password uniqueness (excluding current client being edited)
+  var dup=clients.find(function(c){return c.password===pw&&c.id!==(editingClientId||'');});
+  if(dup){alert('This password is already used by another client. Please choose a different one.');return;}
   var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});
-  var c={id:editingClientId||'cl_'+Date.now(),name:name,pw:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};
+  var c={id:editingClientId||'cl_'+Date.now(),name:name,password:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};
   if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);
   await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');
 }
@@ -871,9 +865,8 @@ function renderLogsList(){var el=document.getElementById('logs-list');if(!access
 async function clearLogs(){if(!confirm('Clear all access logs?'))return;accessLogs=[];await saveConfig();renderLogsList();}
 
 // ── EXPOSE TO GLOBAL (required for type="module") ────────────
-window.tryLogin=tryLogin;window.toggleTheme=toggleTheme;window.logout=logout;
-window.openSettings=openSettings;
-window.saveAdminEmail=saveAdminEmail;window.switchStab=switchStab;
+window.tryLogin=tryLogin;window.logout=logout;
+window.openSettings=openSettings;window.switchStab=switchStab;
 window.toggleFilter=toggleFilter;window.toggleMobileSidebar=toggleMobileSidebar;
 window.setF=setF;window.setSubF=setSubF;window.resetFilters=resetFilters;window.updateResetBtn=updateResetBtn;
 window.openModal=openModal;window.closeModal=closeModal;window.saveProduct=saveProduct;
@@ -889,8 +882,6 @@ window.addBrand=addBrand;window.removeBrand=removeBrand;window.renderBrandsList=
 window.addSubcat=addSubcat;window.removeSubcat=removeSubcat;window.renderSubcatsList=renderSubcatsList;window.updateSubcatSelect=updateSubcatSelect;
 window.openClientModal=openClientModal;window.saveClient=saveClient;window.removeClient=removeClient;window.toggleClientTag=toggleClientTag;window.renderClientsList=renderClientsList;
 window.clearLogs=clearLogs;window.renderLogsList=renderLogsList;window.renderSkusList=renderSkusList;window.renderProducts=renderProducts;
-
-initApp();
 
 document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('settings-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
