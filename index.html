@@ -478,7 +478,10 @@ async function sbGet(t,k){try{var s=await getDoc(doc(_db,t,k));return s.exists()
 async function sbSet(t,k,v){try{await setDoc(doc(_db,t,k),{value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
 async function sbGetAllProducts(){
   try{var q=query(collection(_db,'products'),orderBy('created_at','asc'));var s=await getDocs(q);return s.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
-  catch(e){try{var s2=await getDocs(collection(_db,'products'));return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}catch(e2){return[];}}
+  catch(e){
+    try{var s2=await getDocs(collection(_db,'products'));return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
+    catch(e2){console.error('sbGetAllProducts failed',e2);showToast('Error loading products — check connection',true);return[];}
+  }
 }
 async function sbUpsertProduct(p){try{await setDoc(doc(_db,'products',String(p.id)),{data:p,created_at:p.createdAt||new Date().toISOString()},{merge:true});}catch(e){console.error('fbUpsert',e);}}
 async function sbDeleteProduct(id){try{await deleteDoc(doc(_db,'products',String(id)));}catch(e){console.error('fbDelete',e);}}
@@ -549,13 +552,9 @@ async function tryLogin(){
   // 2) Try client by matching password stored in profile
   var cl=clients.find(function(c){return c.password&&c.password===pw;});
   if(cl){
-    // Client matched — bypass Firebase, load app directly
+    // Client matched — data already pre-loaded before login, use it directly
     btn.disabled=false;btn.textContent='Sign in';
-    document.getElementById('loading-screen').classList.add('show');
     document.getElementById('login-screen').style.display='none';
-    try{await loadAppData();}
-    catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');document.getElementById('login-screen').style.display='flex';return;}
-    document.getElementById('loading-screen').classList.remove('show');
     isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);
     return;
   }
@@ -566,10 +565,13 @@ async function tryLogin(){
 
 onAuthStateChanged(_auth,async function(user){
   if(!user){
-    // No Firebase session — show login screen
-    // Pre-load config so client passwords are available for tryLogin
+    // No Firebase session — pre-load ALL data so clients can use it after password login
+    // (clients bypass Firebase Auth, so we must load data before the auth wall)
     document.getElementById('loading-screen').classList.add('show');
-    _configPromise=loadConfig().catch(function(e){console.warn('loadConfig error',e);});
+    _configPromise=loadAppData().catch(function(e){
+      console.warn('pre-load error, falling back to config only',e);
+      return loadConfig().catch(function(e2){console.warn('loadConfig error',e2);});
+    });
     await _configPromise;
     document.getElementById('loading-screen').classList.remove('show');
     document.getElementById('app').style.display='none';
@@ -651,7 +653,14 @@ function setF(type,val,el){if(type==='cat'){fCat=val;fSubcat='';}else if(type===
 function setSubF(id,el){fSubcat=id;fCat='';document.querySelectorAll('#cat-filter-list .sfilter-item').forEach(function(x){x.classList.remove('active');});el.classList.add('active');updateResetBtn();renderProducts();}
 function visibleTags(){if(isAdmin)return globalTags;if(!currentClient)return globalTags;if(!currentClient.showTags)return[];if(!currentClient.visibleTagIds||currentClient.visibleTagIds.length===0)return globalTags;return globalTags.filter(function(t){return currentClient.visibleTagIds.includes(t.id);});}
 function getFiltered(){var s=(document.getElementById('search-box').value||'').toLowerCase();return products.filter(function(p){var ms=!s||p.nome.toLowerCase().includes(s)||(p.ref||'').toLowerCase().includes(s)||(p.marca||'').toLowerCase().includes(s);var mc=!fCat||p.cat===fCat;var msc=!fSubcat||p.subcat===fSubcat;var mb=!fBrand||p.marca===fBrand;var msz=!fSize||(p.sizes||[]).some(function(x){return x.size===fSize&&x.qty>0;});var mst=!fStock||(fStock==='outofstock'?p.esgotado:!p.esgotado);var mtg=!fTag||(p.tagIds||[]).includes(fTag);return ms&&mc&&msc&&mb&&msz&&mst&&mtg;});}
-function renderProducts(){renderGrid(getFiltered());}
+function renderProducts(){
+  var list=getFiltered();
+  if(!isAdmin&&!currentClient&&list.length===0&&products.length>0){
+    // Safety: if currentClient lost, re-check
+    console.warn('renderProducts: no currentClient but products exist');
+  }
+  renderGrid(list);
+}
 
 // ── CARD RENDERING ───────────────────────────────────────────
 function cardImgHtml(p){var imgs=p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[]);if(!imgs.length)return'<div class="pcard-img-wrap"><div class="noimg">🧥</div></div>';var dots=imgs.length>1?'<div class="img-nav">'+imgs.map(function(_,i){return'<button class="img-dot'+(i===0?' active':'')+'" onclick="event.stopPropagation();slideImg(this,'+i+')"></button>';}).join('')+'</div>':'';var arrows=imgs.length>1?'<button class="img-arrow prev" onclick="event.stopPropagation();slideDir(this,-1)">&#8249;</button><button class="img-arrow next" onclick="event.stopPropagation();slideDir(this,1)">&#8250;</button>':'';return'<div class="pcard-img-wrap">'+imgs.map(function(src,i){return'<img src="'+src+'" class="'+(i===0?'active':'')+'">';}).join('')+dots+arrows+'</div>';}
