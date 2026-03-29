@@ -482,6 +482,7 @@ service cloud.firestore {
         <label class="check-row"><input type="checkbox" id="cl-show-tags" checked> Show tags</label>
         <label class="check-row"><input type="checkbox" id="cl-show-sku" checked> Show SKU</label>
         <label class="check-row"><input type="checkbox" id="cl-show-desc" checked> Show description</label>
+        <label class="check-row"><input type="checkbox" id="cl-show-fit" checked> Show fit</label>
       </div>
     </div>
     <div class="mrow">
@@ -802,6 +803,7 @@ function renderGrid(list){
   var showPrice=isAdmin||(currentClient&&currentClient.showPrice);
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
   var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
+  var showFit=isAdmin||(currentClient&&currentClient.showFit!==false);
   g.innerHTML=sorted.map(function(p){
     var imgHtml=cardImgHtml(p);
     var scName=p.subcat?(subcats.find(function(s){return s.id===p.subcat;})||{}).name||'':'';
@@ -812,7 +814,7 @@ function renderGrid(list){
     var cor=p.cor?'<div class="pcard-cor">'+p.cor+'</div>':'';
     var tagsHtml=buildTagsHtml(p);
     var desc=showDesc&&p.desc?'<div class="pcard-desc">'+p.desc+'</div>':'';
-    var fit=p.fit?'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px">'+p.fit+'</div>':'';
+    var fit=showFit&&p.fit?'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px">'+p.fit+'</div>':'';
     var badge=p.esgotado?'<div class="esgotado-badge">Out of stock</div>':'';
     var newBadge=isNew(p)?'<div class="new-badge">NEW</div>':'';
     var clickAttr=p.esgotado?'':'onclick="openDetail(\''+p.id+'\')"';
@@ -834,6 +836,7 @@ function openDetail(id){
   var showQty=isAdmin||(currentClient&&currentClient.showQty);
   var showSku=isAdmin||!currentClient||currentClient.showSku!==false;
   var showDesc=isAdmin||(currentClient&&currentClient.showDesc!==false);
+  var showFit=isAdmin||(currentClient&&currentClient.showFit!==false);
   var imgs=p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[]);
   _currentDetailImgs=imgs;
   var mw=document.getElementById('detail-main-img');
@@ -852,7 +855,7 @@ function openDetail(id){
   document.getElementById('detail-tags').innerHTML=tags.map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join('');
   var sizes=p.sizes||[];
   document.getElementById('detail-sizes').innerHTML=sizes.length?sizes.map(function(s){return'<span class="size-tag'+(s.qty===0?' zero':'')+'" style="font-size:13px;padding:5px 12px">'+s.size+(showQty?' ('+s.qty+')':'')+'</span>';}).join(''):'<span style="font-size:13px;color:var(--text-3)">No sizes defined</span>';
-  var fitEl=document.getElementById('detail-fit');if(fitEl){fitEl.textContent=p.fit||'';fitEl.style.display=p.fit?'':'none';}
+  var fitEl=document.getElementById('detail-fit');if(fitEl){fitEl.textContent=showFit?(p.fit||''):'';fitEl.style.display=(showFit&&p.fit)?'':'none';}
   var ab=document.getElementById('detail-admin-btns');
   if(isAdmin){ab.style.display='flex';ab.innerHTML='<button class="btn sm" onclick="document.getElementById(\'detail-overlay\').classList.remove(\'open\');openModal(\''+p.id+'\')">Edit</button><button class="btn sm" onclick="duplicateProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')">⧉ Duplicate</button><button class="btn sm danger" onclick="deleteProduct(\''+p.id+'\');document.getElementById(\'detail-overlay\').classList.remove(\'open\')"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg></button>';}else ab.style.display='none';
   document.getElementById('detail-overlay').classList.add('open');document.getElementById('detail-overlay').scrollTop=0;
@@ -966,7 +969,7 @@ function renderClientsList(){
   var filtered=clients.filter(function(c){return!q||c.name.toLowerCase().includes(q)||(c.password||'').toLowerCase().includes(q);});
   if(!filtered.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3);margin-bottom:8px">'+(q?'No clients match "'+q+'"':'No clients yet.')+'</p>';return;}
   el.innerHTML=filtered.map(function(c){
-    var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description'].filter(Boolean).join(', ')||'None';
+    var perms=[c.showPrice&&'Prices',c.showQty&&'Quantities',c.showTags&&'Tags',c.showSku!==false&&'SKU',c.showDesc!==false&&'Description',c.showFit!==false&&'Fit'].filter(Boolean).join(', ')||'None';
     var tagLabels=c.visibleTagIds&&c.visibleTagIds.length?c.visibleTagIds.map(function(id){return globalTags.find(function(t){return t.id===id;});}).filter(Boolean).map(function(t){return'<span class="ptag" style="'+tagStyle(t.color)+'">'+t.label+'</span>';}).join(' '):'<span style="font-size:11px;color:var(--text-3)">All tags</span>';
     return'<div class="client-card"><div class="client-card-header"><div class="client-card-name">'+c.name+'</div><div style="display:flex;gap:6px"><button class="btn sm" onclick="openClientModal(\''+c.id+'\')">Edit</button><button class="btn sm danger" onclick="removeClient(\''+c.id+'\')">Delete</button></div></div><div style="font-size:12px;color:var(--text-2)">Password: <code style="background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">'+(c.password||'—')+'</code></div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Visible: '+perms+'</div><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+tagLabels+'</div></div>';
   }).join('');
@@ -981,6 +984,7 @@ function openClientModal(id){
   document.getElementById('cl-show-tags').checked=c?!!c.showTags:true;
   document.getElementById('cl-show-sku').checked=c?(c.showSku!==false):true;
   document.getElementById('cl-show-desc').checked=c?(c.showDesc!==false):true;
+  document.getElementById('cl-show-fit').checked=c?(c.showFit!==false):true;
   var selIds=c?(c.visibleTagIds||[]):[];
   document.getElementById('cl-tags-picker').innerHTML=globalTags.map(function(t){var sel=selIds.includes(t.id);return'<span class="ptag" data-id="'+t.id+'" data-sel="'+(sel?'1':'0')+'" style="'+tagStyle(t.color)+';cursor:pointer;border:2px solid '+(sel?'var(--accent)':'transparent')+';padding:3px 10px;border-radius:20px" onclick="toggleClientTag(this)">'+t.label+'</span>';}).join('')||'<span style="font-size:12px;color:var(--text-3)">No tags created yet.</span>';
   document.getElementById('client-modal').classList.add('open');
@@ -994,7 +998,7 @@ async function saveClient(){
   var dup=clients.find(function(c){return c.password===pw&&c.id!==(editingClientId||'');});
   if(dup){alert('This password is already used by another client. Please choose a different one.');return;}
   var visibleTagIds=[...document.querySelectorAll('#cl-tags-picker .ptag')].filter(function(el){return el.dataset.sel==='1';}).map(function(el){return el.dataset.id;});
-  var c={id:editingClientId||'cl_'+Date.now(),name:name,password:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,visibleTagIds:visibleTagIds};
+  var c={id:editingClientId||'cl_'+Date.now(),name:name,password:pw,showPrice:document.getElementById('cl-show-price').checked,showQty:document.getElementById('cl-show-qty').checked,showTags:document.getElementById('cl-show-tags').checked,showSku:document.getElementById('cl-show-sku').checked,showDesc:document.getElementById('cl-show-desc').checked,showFit:document.getElementById('cl-show-fit').checked,visibleTagIds:visibleTagIds};
   if(editingClientId)clients[clients.findIndex(function(x){return x.id===editingClientId;})]=c;else clients.push(c);
   await saveConfig();document.getElementById('client-modal').classList.remove('open');renderClientsList();showToast('Client saved ✓');
 }
