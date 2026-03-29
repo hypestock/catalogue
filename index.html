@@ -504,9 +504,7 @@ var firebaseConfig={apiKey:"AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",authDomain:
 firebase.initializeApp(firebaseConfig);
 var _db=firebase.firestore();
 var _auth=firebase.auth();
-// Limit Firebase session to browser session; we control 12h expiry manually
 _auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-var ADMIN_SESSION_HOURS=12;
 
 // ── ADMIN EMAIL — change this if you used a different email ──
 var ADMIN_EMAIL='admin@catalogue.com';
@@ -590,8 +588,6 @@ async function tryAdminLogin(){
   var btn=event.target;btn.disabled=true;btn.textContent='Signing in...';
   try{
     await _auth.signInWithEmailAndPassword(email,pw);
-    // Save admin login time for 12h expiry
-    localStorage.setItem('admin_login_ts',String(Date.now()));
     // onAuthStateChanged handles the rest
     btn.disabled=false;btn.textContent='Sign in as Admin';
   }catch(e){
@@ -692,12 +688,6 @@ _auth.onAuthStateChanged(async function(user){
     return;
   }
   // Firebase session — validate it is the authorised admin
-  // Check 12h expiry
-  var adminTs=localStorage.getItem('admin_login_ts');
-  if(adminTs&&Date.now()-Number(adminTs)>ADMIN_SESSION_HOURS*60*60*1000){
-    localStorage.removeItem('admin_login_ts');
-    await _auth.signOut();return;
-  }
   if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     document.getElementById('admin-login-err').textContent='This account is not authorised as admin.';
     document.getElementById('admin-popup').style.display='block';
@@ -729,7 +719,6 @@ function startApp(role){
 async function logout(){
   var wasAdmin=isAdmin;
   localStorage.removeItem('client_session');
-  localStorage.removeItem('admin_login_ts');
   isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
   document.getElementById('app').style.display='none';
   document.getElementById('client-pw-input').value='';
