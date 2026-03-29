@@ -440,11 +440,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div style="max-height:360px;overflow-y:auto" id="skus-list"></div>
     </div>
     <div class="stab-panel" id="stab-security">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2)">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.8;color:var(--text-2);margin-bottom:12px">
         <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Access control</div>
-        <p><strong>Admin</strong> — authenticated via Firebase (email: <code style="background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2041444d494e60434154414c4f4755450e434f4d">[email&#160;protected]</a></code>). To change the admin password, go to <strong>console.firebase.google.com</strong> → Authentication → Users.</p>
-        <p style="margin-top:8px"><strong>Clients</strong> — authenticated by a password set directly in the <strong>Clients</strong> tab. No email or Firebase account required. Each client uses only their password to log in.</p>
-        <p style="margin-top:8px">Make sure each client has a unique password to avoid conflicts.</p>
+        <p><strong>Admin</strong> — logs in via the <strong>Admin tab</strong> with Firebase email + password. Change credentials at <strong>console.firebase.google.com</strong> → Authentication → Users.</p>
+        <p style="margin-top:8px"><strong>Clients</strong> — log in via the <strong>Client tab</strong> with the password set here. No email or Firebase account needed.</p>
+      </div>
+      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.8;color:#92400e">
+        <div style="font-weight:600;margin-bottom:8px">⚠️ Required: Firestore security rules</div>
+        <p>Clients do not use Firebase Auth. For them to see products, your Firestore rules must allow unauthenticated reads. Go to <strong>console.firebase.google.com</strong> → Firestore → Rules and set:</p>
+        <pre style="background:#fff;border:1px solid #f59e0b;border-radius:4px;padding:10px;margin-top:8px;font-size:12px;overflow-x:auto;color:#1a1a18">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Products & config: anyone can read, only auth users can write
+    match /products/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /app_config/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}</pre>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
@@ -497,10 +514,13 @@ var ADMIN_EMAIL='admin@catalogue.com';
 async function sbGet(t,k){try{var s=await _db.collection(t).doc(k).get();return s.exists?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
 async function sbSet(t,k,v){try{await _db.collection(t).doc(k).set({value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
 async function sbGetAllProducts(){
+  // NOTE: Firestore security rules must allow unauthenticated reads for clients to see products.
+  // Rules needed: allow read: if true; (or) allow read: if request.auth != null || true;
   try{var s=await _db.collection('products').orderBy('created_at','asc').get();return s.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
   catch(e){
+    console.warn('sbGetAllProducts ordered failed, trying unordered:',e.code,e.message);
     try{var s2=await _db.collection('products').get();return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
-    catch(e2){console.error('sbGetAllProducts failed',e2);showToast('Error loading products — check connection',true);return[];}
+    catch(e2){console.error('sbGetAllProducts failed:',e2.code,e2.message);showToast('Error loading products — check Firestore rules',true);return[];}
   }
 }
 async function sbUpsertProduct(p){try{await _db.collection('products').doc(String(p.id)).set({data:p,created_at:p.createdAt||new Date().toISOString()},{merge:true});}catch(e){console.error('fbUpsert',e);}}
@@ -541,7 +561,8 @@ async function loadAppData(){
 
 // ── SAVE CONFIG (queued to prevent race conditions) ──────────
 async function saveConfig(){
-  if(!_appReady){console.warn('saveConfig blocked');return;}
+  if(!_appReady&&!isAdmin){console.warn('saveConfig blocked (not admin)');return;}
+  if(!_appReady){_appReady=true;}// allow save if admin triggered it
   saveConfig._q=(saveConfig._q||Promise.resolve()).then(async function(){
     try{await sbSet('app_config','settings',{brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});}
     catch(e){showToast('Save error — check connection',true);console.error('saveConfig',e);}
@@ -585,9 +606,28 @@ async function tryAdminLogin(){
 async function tryClientLogin(){
   var pw=document.getElementById('client-pw-input').value.trim();
   var errEl=document.getElementById('client-login-err');
+  var btn=document.querySelector('#panel-client .btn-login');
   errEl.textContent='';
   if(!pw){errEl.textContent='Enter your access password.';return;}
-  if(_configPromise){await _configPromise;}
+
+  // Show loading while we ensure data is ready
+  if(btn){btn.disabled=true;btn.textContent='Loading...';}
+  document.getElementById('loading-screen').classList.add('show');
+
+  // Wait for the initial pre-load; if it failed, try again
+  try{ if(_configPromise){await _configPromise;} }catch(e){console.warn('initial load error',e);}
+
+  // If products still not loaded, try one more time
+  console.log('[Client login] products loaded:',products.length,'_appReady:',_appReady,'clients:',clients.length);
+  if(!_appReady || products.length===0){
+    console.log('[Client login] retrying loadAppData...');
+    try{ await loadAppData(); console.log('[Client login] after retry products:',products.length); }
+    catch(e){ console.warn('loadAppData retry failed:',e); _appReady=true; }
+  }
+
+  document.getElementById('loading-screen').classList.remove('show');
+  if(btn){btn.disabled=false;btn.textContent='Access catalogue';}
+
   var cl=clients.find(function(c){return c.password&&c.password===pw;});
   if(cl){
     document.getElementById('login-screen').style.display='none';
@@ -638,6 +678,10 @@ function startApp(role){
   document.getElementById('settings-btn').style.display=isAdmin?'':'none';
   document.getElementById('stock-section').style.display=isAdmin?'':'none';
   populateCatSelect();updateBrandSelects();buildSidebarFilters();renderProducts();
+  // If client sees no products, show helpful message
+  if(!isAdmin && products.length===0){
+    showToast('No products found. The admin may need to add products first.',true);
+  }
 }
 async function logout(){
   var wasAdmin=isAdmin;
