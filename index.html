@@ -226,27 +226,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <body>
 <div id="loading-screen"><div class="loading-spinner"></div><div style="font-size:13px;color:var(--text-2)">Loading catalogue...</div></div>
 <div id="login-screen">
-  <button class="theme-toggle login-theme" onclick="toggleTheme()">🌙</button>
+  <div style="position:fixed;top:16px;right:16px;display:flex;align-items:center;gap:8px">
+    <button class="btn sm" id="admin-login-btn" onclick="toggleAdminPopup()" style="font-size:12px">🔒 Admin</button>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+  <!-- ADMIN POPUP -->
+  <div id="admin-popup" style="display:none;position:fixed;top:52px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;width:300px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.12)">
+    <div class="field"><label>Email</label><input type="email" id="admin-email-input" placeholder="admin@example.com" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw-input').focus()" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="admin-pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryAdminLogin()" autocomplete="current-password"></div>
+    <button class="btn-login" onclick="tryAdminLogin()">Sign in as Admin</button>
+    <div class="login-err" id="admin-login-err"></div>
+  </div>
   <div class="login-box">
     <div class="logo">Catalogue</div>
-    <div class="subtitle">Select your access type</div>
-    <div class="login-tabs">
-      <button class="login-tab active" id="tab-client" onclick="switchLoginTab('client')">👤 Client</button>
-      <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')">👨‍💼 Admin</button>
-    </div>
+    <div class="subtitle">Enter your access password</div>
     <!-- CLIENT PANEL -->
-    <div class="login-panel active" id="panel-client">
+    <div id="panel-client">
       <div class="field"><label>Access password</label><input type="password" id="client-pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryClientLogin()" autocomplete="current-password"></div>
       <button class="btn-login" onclick="tryClientLogin()">Access catalogue</button>
       <div class="login-err" id="client-login-err"></div>
-    </div>
-    <!-- ADMIN PANEL -->
-    <div class="login-panel" id="panel-admin">
-      <div class="login-info-box">🔒 Admin: use the email and password from Firebase Authentication.</div>
-      <div class="field"><label>Email</label><input type="email" id="admin-email-input" placeholder="admin@example.com" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw-input').focus()" autocomplete="username"></div>
-      <div class="field"><label>Password</label><input type="password" id="admin-pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryAdminLogin()" autocomplete="current-password"></div>
-      <button class="btn-login" onclick="tryAdminLogin()">Sign in as Admin</button>
-      <div class="login-err" id="admin-login-err"></div>
     </div>
   </div>
 </div>
@@ -581,16 +579,6 @@ async function saveConfig(){
   return saveConfig._q;
 }
 
-// ── LOGIN TAB SWITCHER ───────────────────────────────────────
-function switchLoginTab(tab){
-  document.getElementById('tab-client').classList.toggle('active',tab==='client');
-  document.getElementById('tab-admin').classList.toggle('active',tab==='admin');
-  document.getElementById('panel-client').classList.toggle('active',tab==='client');
-  document.getElementById('panel-admin').classList.toggle('active',tab==='admin');
-  document.getElementById('client-login-err').textContent='';
-  document.getElementById('admin-login-err').textContent='';
-}
-
 // ── ADMIN LOGIN — Firebase only ───────────────────────────────
 async function tryAdminLogin(){
   var email=document.getElementById('admin-email-input').value.trim();
@@ -654,6 +642,19 @@ async function tryClientLogin(){
 
 // legacy
 function tryLogin(){tryClientLogin();}
+function switchLoginTab(tab){} // kept for compatibility
+function toggleAdminPopup(){
+  var p=document.getElementById('admin-popup');
+  var isOpen=p.style.display!=='none';
+  p.style.display=isOpen?'none':'block';
+  if(!isOpen){setTimeout(function(){document.getElementById('admin-email-input').focus();},50);}
+}
+// Close admin popup when clicking outside
+document.addEventListener('click',function(e){
+  var popup=document.getElementById('admin-popup');
+  var btn=document.getElementById('admin-login-btn');
+  if(popup&&btn&&!popup.contains(e.target)&&!btn.contains(e.target)){popup.style.display='none';}
+});
 
 _auth.onAuthStateChanged(async function(user){
   if(!user){
@@ -671,8 +672,17 @@ _auth.onAuthStateChanged(async function(user){
       try{
         var sess=JSON.parse(saved);
         if(sess.expires>Date.now()){
+          // If clients didn't load yet, retry once
+          if(!clients.length){
+            try{await loadConfig();}catch(e){console.warn('session restore loadConfig retry failed',e);}
+          }
           var cl=clients.find(function(c){return c.id===sess.id;});
-          if(cl){document.getElementById('login-screen').style.display='none';isAdmin=false;currentClient=cl;startApp(cl.name);return;}
+          if(cl){
+            document.getElementById('login-screen').style.display='none';
+            document.getElementById('app').style.display='none';
+            isAdmin=false;currentClient=cl;startApp(cl.name);
+            return;
+          }
         }
         localStorage.removeItem('client_session');
       }catch(e){localStorage.removeItem('client_session');}
@@ -690,7 +700,7 @@ _auth.onAuthStateChanged(async function(user){
   }
   if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     document.getElementById('admin-login-err').textContent='This account is not authorised as admin.';
-    switchLoginTab('admin');
+    document.getElementById('admin-popup').style.display='block';
     document.getElementById('login-screen').style.display='flex';
     await _auth.signOut();
     return;
@@ -727,7 +737,7 @@ async function logout(){
   document.getElementById('admin-email-input').value='';
   document.getElementById('client-login-err').textContent='';
   document.getElementById('admin-login-err').textContent='';
-  switchLoginTab('client');
+  document.getElementById('admin-popup').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   if(wasAdmin){await _auth.signOut();}
 }
