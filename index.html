@@ -13,14 +13,15 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
 .theme-toggle{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background .12s;flex-shrink:0}
 .theme-toggle:hover{background:var(--surface2)}
+.login-tabs{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:1.75rem}
+.login-tab{flex:1;padding:9px;font-size:13px;font-weight:500;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:var(--text-2);transition:background .15s,color .15s}
+.login-tab.active{background:var(--accent);color:var(--accent-fg)}
+.login-panel{display:none}.login-panel.active{display:block}
+.login-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:1rem}
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem;background:var(--bg)}
 .login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem 2rem;width:100%;max-width:420px}
 .login-box .logo{font-size:20px;font-weight:500;letter-spacing:-.02em;text-align:center;margin-bottom:.4rem}
-.login-box .subtitle{font-size:13px;color:var(--text-2);text-align:center;margin-bottom:1.5rem}
-.login-tabs{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:1.75rem}
-.login-tab{flex:1;padding:8px;font-size:13px;font-weight:500;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:var(--text-2);transition:background .15s,color .15s}
-.login-tab.active{background:var(--accent);color:var(--accent-fg)}
-.login-panel{display:none}.login-panel.active{display:block}
+.login-box .subtitle{font-size:13px;color:var(--text-2);text-align:center;margin-bottom:2rem}
 .field{margin-bottom:1rem}
 .field label{display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
 .field input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
@@ -30,7 +31,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-login:disabled{opacity:.5;cursor:not-allowed}
 .login-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center;min-height:18px}
 .login-theme{position:fixed;top:16px;right:16px}
-.login-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:1rem}
 #loading-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 #loading-screen.show{display:flex}
 .loading-spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
@@ -231,32 +231,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="logo">Catalogue</div>
     <div class="subtitle">Select your access type</div>
     <div class="login-tabs">
-      <button class="login-tab active" id="tab-client" data-tab="client" onclick="switchLoginTab('client')">👤 Client</button>
-      <button class="login-tab" id="tab-admin" data-tab="admin" onclick="switchLoginTab('admin')">👨‍💼 Admin</button>
+      <button class="login-tab active" id="tab-client" onclick="switchLoginTab('client')">👤 Client</button>
+      <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')">👨‍💼 Admin</button>
     </div>
-
     <!-- CLIENT PANEL -->
     <div class="login-panel active" id="panel-client">
-      <div class="field">
-        <label>Access password</label>
-        <input type="password" id="client-pw-input" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="btn-login" id="client-login-btn" onclick="tryClientLogin()">Access catalogue</button>
+      <div class="field"><label>Access password</label><input type="password" id="client-pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryClientLogin()" autocomplete="current-password"></div>
+      <button class="btn-login" onclick="tryClientLogin()">Access catalogue</button>
       <div class="login-err" id="client-login-err"></div>
     </div>
-
     <!-- ADMIN PANEL -->
     <div class="login-panel" id="panel-admin">
-      <div class="login-info-box">🔒 Admin access uses Firebase Authentication. Use your admin email and password.</div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="admin-email-input" placeholder="admin@example.com" autocomplete="username">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="admin-pw-input" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="btn-login" id="admin-login-btn" onclick="tryAdminLogin()">Sign in as Admin</button>
+      <div class="login-info-box">🔒 Admin: use the email and password from Firebase Authentication.</div>
+      <div class="field"><label>Email</label><input type="email" id="admin-email-input" placeholder="admin@example.com" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw-input').focus()" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="admin-pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryAdminLogin()" autocomplete="current-password"></div>
+      <button class="btn-login" onclick="tryAdminLogin()">Sign in as Admin</button>
       <div class="login-err" id="admin-login-err"></div>
     </div>
   </div>
@@ -453,10 +442,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="stab-panel" id="stab-security">
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;color:var(--text-2)">
         <div style="font-weight:500;color:var(--text);margin-bottom:8px">🔒 Access control</div>
-        <p><strong>Admin</strong> — authenticates via the <strong>Admin tab</strong> on the login screen using Firebase Authentication (email + password). To change the admin credentials, go to <strong>console.firebase.google.com</strong> → Authentication → Users.</p>
-        <p style="margin-top:8px"><strong>Clients</strong> — authenticate via the <strong>Client tab</strong> on the login screen using only the password set by the admin in the <em>Clients</em> tab. No email, no Firebase account, no 2FA required. Each client sees only the catalogue and cannot edit anything.</p>
-        <p style="margin-top:8px">The two authentication systems are completely independent. Admin credentials cannot be used in the Client tab and vice versa.</p>
-        <p style="margin-top:8px">Make sure each client has a <strong>unique password</strong> to avoid conflicts.</p>
+        <p><strong>Admin</strong> — authenticated via Firebase (email: <code style="background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2041444d494e60434154414c4f4755450e434f4d">[email&#160;protected]</a></code>). To change the admin password, go to <strong>console.firebase.google.com</strong> → Authentication → Users.</p>
+        <p style="margin-top:8px"><strong>Clients</strong> — authenticated by a password set directly in the <strong>Clients</strong> tab. No email or Firebase account required. Each client uses only their password to log in.</p>
+        <p style="margin-top:8px">Make sure each client has a unique password to avoid conflicts.</p>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
@@ -492,72 +480,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<!-- Firebase compat SDK — global scope, no module issues -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-// ── LOGIN TAB SWITCHER — plain script, runs immediately ──
-function switchLoginTab(tab){
-  var tabClient=document.getElementById('tab-client');
-  var tabAdmin=document.getElementById('tab-admin');
-  var panelClient=document.getElementById('panel-client');
-  var panelAdmin=document.getElementById('panel-admin');
-  var errClient=document.getElementById('client-login-err');
-  var errAdmin=document.getElementById('admin-login-err');
-  if(!tabClient||!tabAdmin||!panelClient||!panelAdmin)return;
-  tabClient.classList.toggle('active',tab==='client');
-  tabAdmin.classList.toggle('active',tab==='admin');
-  panelClient.classList.toggle('active',tab==='client');
-  panelAdmin.classList.toggle('active',tab==='admin');
-  if(errClient)errClient.textContent='';
-  if(errAdmin)errAdmin.textContent='';
-}
-
-// ── LOGIN BUTTONS — delegate to module functions once loaded ──
-// _moduleReady is set to true by the module after it initialises
-window._moduleReady = false;
-
-function tryClientLogin(){
-  if(!window._moduleReady){
-    document.getElementById('client-login-err').textContent='Still loading, please wait...';
-    return;
-  }
-  window._tryClientLogin();
-}
-
-function tryAdminLogin(){
-  if(!window._moduleReady){
-    document.getElementById('admin-login-err').textContent='Still loading, please wait...';
-    return;
-  }
-  window._tryAdminLogin();
-}
-
-function tryLogin(){ tryClientLogin(); }
-</script>
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, getDocs, deleteDoc, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
 var firebaseConfig={apiKey:"AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",authDomain:"brands-catalogue.firebaseapp.com",projectId:"brands-catalogue",storageBucket:"brands-catalogue.firebasestorage.app",messagingSenderId:"196830175467",appId:"1:196830175467:web:7ede1c3cc72e849ade1eae"};
-var _fbApp=initializeApp(firebaseConfig);
-var _db=getFirestore(_fbApp);
-var _auth=getAuth(_fbApp);
+firebase.initializeApp(firebaseConfig);
+var _db=firebase.firestore();
+var _auth=firebase.auth();
 
 // ── ADMIN EMAIL — change this if you used a different email ──
 var ADMIN_EMAIL='admin@catalogue.com';
 
 // ── FIRESTORE HELPERS ────────────────────────────────────────
-async function sbGet(t,k){try{var s=await getDoc(doc(_db,t,k));return s.exists()?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
-async function sbSet(t,k,v){try{await setDoc(doc(_db,t,k),{value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
+async function sbGet(t,k){try{var s=await _db.collection(t).doc(k).get();return s.exists?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
+async function sbSet(t,k,v){try{await _db.collection(t).doc(k).set({value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
 async function sbGetAllProducts(){
-  try{var q=query(collection(_db,'products'),orderBy('created_at','asc'));var s=await getDocs(q);return s.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
+  try{var s=await _db.collection('products').orderBy('created_at','asc').get();return s.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
   catch(e){
-    try{var s2=await getDocs(collection(_db,'products'));return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
+    try{var s2=await _db.collection('products').get();return s2.docs.map(function(d){return Object.assign({},d.data().data,{id:d.id});});}
     catch(e2){console.error('sbGetAllProducts failed',e2);showToast('Error loading products — check connection',true);return[];}
   }
 }
-async function sbUpsertProduct(p){try{await setDoc(doc(_db,'products',String(p.id)),{data:p,created_at:p.createdAt||new Date().toISOString()},{merge:true});}catch(e){console.error('fbUpsert',e);}}
-async function sbDeleteProduct(id){try{await deleteDoc(doc(_db,'products',String(id)));}catch(e){console.error('fbDelete',e);}}
+async function sbUpsertProduct(p){try{await _db.collection('products').doc(String(p.id)).set({data:p,created_at:p.createdAt||new Date().toISOString()},{merge:true});}catch(e){console.error('fbUpsert',e);}}
+async function sbDeleteProduct(id){try{await _db.collection('products').doc(String(id)).delete();}catch(e){console.error('fbDelete',e);}}
 
 // ── STATE ────────────────────────────────────────────────────
 var products=[],brands=[],globalTags=[],subcats=[],clients=[],accessLogs=[];
@@ -602,59 +549,63 @@ async function saveConfig(){
   return saveConfig._q;
 }
 
-// ── LOGIN TAB SWITCHER — defined in plain script above the module ─
+// ── LOGIN TAB SWITCHER ───────────────────────────────────────
+function switchLoginTab(tab){
+  document.getElementById('tab-client').classList.toggle('active',tab==='client');
+  document.getElementById('tab-admin').classList.toggle('active',tab==='admin');
+  document.getElementById('panel-client').classList.toggle('active',tab==='client');
+  document.getElementById('panel-admin').classList.toggle('active',tab==='admin');
+  document.getElementById('client-login-err').textContent='';
+  document.getElementById('admin-login-err').textContent='';
+}
 
-// ── ADMIN LOGIN — Firebase Authentication only ────────────────
-async function _tryAdminLogin(){
+// ── ADMIN LOGIN — Firebase only ───────────────────────────────
+async function tryAdminLogin(){
   var email=document.getElementById('admin-email-input').value.trim();
   var pw=document.getElementById('admin-pw-input').value.trim();
   var errEl=document.getElementById('admin-login-err');
-  var btn=document.getElementById('admin-login-btn');
   errEl.textContent='';
   if(!email){errEl.textContent='Enter your email.';return;}
   if(!pw){errEl.textContent='Enter your password.';return;}
-  btn.disabled=true;btn.textContent='Signing in...';
+  var btn=event.target;btn.disabled=true;btn.textContent='Signing in...';
   try{
-    await signInWithEmailAndPassword(_auth,email,pw);
+    await _auth.signInWithEmailAndPassword(email,pw);
+    // onAuthStateChanged handles the rest
     btn.disabled=false;btn.textContent='Sign in as Admin';
   }catch(e){
     btn.disabled=false;btn.textContent='Sign in as Admin';
     var msg='Incorrect email or password.';
     if(e.code==='auth/too-many-requests')msg='Too many attempts. Try again later.';
-    else if(e.code==='auth/network-request-failed')msg='Network error. Check your connection.';
+    else if(e.code==='auth/network-request-failed')msg='Network error. Check connection.';
     errEl.textContent=msg;
   }
 }
 
-// ── CLIENT LOGIN — password-only, no Firebase ─────────────────
-async function _tryClientLogin(){
+// ── CLIENT LOGIN — password only, no Firebase ─────────────────
+async function tryClientLogin(){
   var pw=document.getElementById('client-pw-input').value.trim();
   var errEl=document.getElementById('client-login-err');
-  var btn=document.getElementById('client-login-btn');
   errEl.textContent='';
   if(!pw){errEl.textContent='Enter your access password.';return;}
-  btn.disabled=true;btn.textContent='Checking...';
   if(_configPromise){await _configPromise;}
   var cl=clients.find(function(c){return c.password&&c.password===pw;});
   if(cl){
-    btn.disabled=false;btn.textContent='Access catalogue';
     document.getElementById('login-screen').style.display='none';
-    isAdmin=false;currentClient=cl;
-    logAccess(cl.name);
-    startApp(cl.name);
+    isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);
   }else{
-    btn.disabled=false;btn.textContent='Access catalogue';
     errEl.textContent='Incorrect password.';
   }
 }
 
+// legacy
+function tryLogin(){tryClientLogin();}
 
-onAuthStateChanged(_auth,async function(user){
+_auth.onAuthStateChanged(async function(user){
   if(!user){
-    // No Firebase session — pre-load ALL data so clients can use it after password login
+    // No session — pre-load data so client password login works
     document.getElementById('loading-screen').classList.add('show');
     _configPromise=loadAppData().catch(function(e){
-      console.warn('pre-load error, falling back to config only',e);
+      console.warn('pre-load error',e);
       return loadConfig().catch(function(e2){console.warn('loadConfig error',e2);});
     });
     await _configPromise;
@@ -663,21 +614,19 @@ onAuthStateChanged(_auth,async function(user){
     document.getElementById('login-screen').style.display='flex';
     return;
   }
-  // Firebase session exists — validate it is the authorised admin email
+  // Firebase session — validate it is the authorised admin
   if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     document.getElementById('admin-login-err').textContent='This account is not authorised as admin.';
     switchLoginTab('admin');
     document.getElementById('login-screen').style.display='flex';
-    await signOut(_auth);
+    await _auth.signOut();
     return;
   }
   document.getElementById('loading-screen').classList.add('show');
   document.getElementById('login-screen').style.display='none';
-  if(!_configReady){
-    try{await loadConfig();}catch(e){console.warn('loadConfig error',e);}
-  }
+  if(!_configReady){try{await loadConfig();}catch(e){console.warn('loadConfig error',e);}}
   try{await loadAppData();}
-  catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await signOut(_auth);return;}
+  catch(e){showToast('Connection error',true);document.getElementById('loading-screen').classList.remove('show');await _auth.signOut();return;}
   document.getElementById('loading-screen').classList.remove('show');
   isAdmin=true;currentClient=null;logAccess('Admin');startApp('admin');
 });
@@ -701,7 +650,7 @@ async function logout(){
   document.getElementById('admin-login-err').textContent='';
   switchLoginTab('client');
   document.getElementById('login-screen').style.display='flex';
-  if(wasAdmin){await signOut(_auth);}
+  if(wasAdmin){await _auth.signOut();}
 }
 function logAccess(name){
   var now=new Date();function p(n){return String(n).padStart(2,'0');}
@@ -974,15 +923,8 @@ function renderSkusList(){var el=document.getElementById('skus-list');var used=p
 function renderLogsList(){var el=document.getElementById('logs-list');if(!accessLogs.length){el.innerHTML='<p style="font-size:13px;color:var(--text-3)">No logins recorded yet.</p>';return;}el.innerHTML='<table class="log-table"><thead><tr><th>User</th><th>Date &amp; Time</th></tr></thead><tbody>'+accessLogs.map(function(l){return'<tr><td style="font-weight:500">'+l.name+'</td><td style="color:var(--text-2)">'+l.ts+'</td></tr>';}).join('')+'</tbody></table>';}
 async function clearLogs(){if(!confirm('Clear all access logs?'))return;accessLogs=[];await saveConfig();renderLogsList();}
 
-// ── LOGIN EVENT LISTENERS (inside module) ──
-document.getElementById('client-pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')_tryClientLogin();});
-document.getElementById('admin-email-input').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('admin-pw-input').focus();});
-document.getElementById('admin-pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')_tryAdminLogin();});
-
-// ── EXPOSE TO GLOBAL (required for type="module") ────────────
-window._tryAdminLogin=_tryAdminLogin;
-window._tryClientLogin=_tryClientLogin;
-window._moduleReady=true;
+// ── EXPOSE TO GLOBAL ────────────────────────────────────────
+window.tryLogin=tryLogin;window.tryAdminLogin=tryAdminLogin;window.tryClientLogin=tryClientLogin;window.switchLoginTab=switchLoginTab;window.logout=logout;
 window.openSettings=openSettings;window.switchStab=switchStab;
 window.toggleFilter=toggleFilter;window.toggleMobileSidebar=toggleMobileSidebar;
 window.setF=setF;window.setSubF=setSubF;window.resetFilters=resetFilters;window.updateResetBtn=updateResetBtn;
@@ -1002,4 +944,7 @@ window.clearLogs=clearLogs;window.renderLogsList=renderLogsList;window.renderSku
 
 document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('settings-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
-document.getElementById('client-modal').addEventListener('
+document.getElementById('client-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+</script>
+</body>
+</html>
