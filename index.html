@@ -506,13 +506,16 @@ var firebaseConfig={apiKey:"AIzaSyBoVmr8ZS04lUbZ2wZftmMiuItGSLfdLd8",authDomain:
 firebase.initializeApp(firebaseConfig);
 var _db=firebase.firestore();
 var _auth=firebase.auth();
+// Limit Firebase session to browser session; we control 12h expiry manually
+_auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+var ADMIN_SESSION_HOURS=12;
 
 // ── ADMIN EMAIL — change this if you used a different email ──
 var ADMIN_EMAIL='admin@catalogue.com';
 
 // ── FIRESTORE HELPERS ────────────────────────────────────────
 async function sbGet(t,k){try{var s=await _db.collection(t).doc(k).get();return s.exists?s.data().value:null;}catch(e){console.error('fbGet',e);return null;}}
-async function sbSet(t,k,v){try{await _db.collection(t).doc(k).set({value:v,updated_at:new Date().toISOString()});}catch(e){console.error('fbSet',e);}}
+async function sbSet(t,k,v){try{await _db.collection(t).doc(k).set({value:v,updated_at:new Date().toISOString()},{merge:true});}catch(e){console.error('fbSet',e);}}
 async function sbGetAllProducts(){
   // NOTE: Firestore security rules must allow unauthenticated reads for clients to see products.
   // Rules needed: allow read: if true; (or) allow read: if request.auth != null || true;
@@ -561,8 +564,16 @@ async function loadAppData(){
 
 // ── SAVE CONFIG (queued to prevent race conditions) ──────────
 async function saveConfig(){
-  if(!_appReady&&!isAdmin){console.warn('saveConfig blocked (not admin)');return;}
-  if(!_appReady){_appReady=true;}// allow save if admin triggered it
+  if(!isAdmin){console.warn('saveConfig blocked (not admin)');return;}
+  // Safety guard: never save if critical data arrays are all empty and Firestore had data before
+  // This prevents wiping data during a failed or partial load
+  var hasData=brands.length||globalTags.length||subcats.length||clients.length;
+  if(!hasData&&_configReady){
+    // loadConfig ran but returned nothing — could be a load failure, refuse to overwrite
+    console.warn('saveConfig blocked: all arrays empty after config loaded, possible load failure');
+    showToast('Save blocked — data may not have loaded correctly. Refresh and try again.',true);
+    return;
+  }
   saveConfig._q=(saveConfig._q||Promise.resolve()).then(async function(){
     try{await sbSet('app_config','settings',{brands:brands,globalTags:globalTags,subcats:subcats,clients:clients,accessLogs:accessLogs});}
     catch(e){showToast('Save error — check connection',true);console.error('saveConfig',e);}
@@ -591,6 +602,8 @@ async function tryAdminLogin(){
   var btn=event.target;btn.disabled=true;btn.textContent='Signing in...';
   try{
     await _auth.signInWithEmailAndPassword(email,pw);
+    // Save admin login time for 12h expiry
+    localStorage.setItem('admin_login_ts',String(Date.now()));
     // onAuthStateChanged handles the rest
     btn.disabled=false;btn.textContent='Sign in as Admin';
   }catch(e){
@@ -630,6 +643,8 @@ async function tryClientLogin(){
 
   var cl=clients.find(function(c){return c.password&&c.password===pw;});
   if(cl){
+    // Save client session for 12 hours
+    localStorage.setItem('client_session',JSON.stringify({id:cl.id,expires:Date.now()+12*60*60*1000}));
     document.getElementById('login-screen').style.display='none';
     isAdmin=false;currentClient=cl;logAccess(cl.name);startApp(cl.name);
   }else{
@@ -650,11 +665,29 @@ _auth.onAuthStateChanged(async function(user){
     });
     await _configPromise;
     document.getElementById('loading-screen').classList.remove('show');
+    // Check for saved client session (valid for 12 hours)
+    var saved=localStorage.getItem('client_session');
+    if(saved){
+      try{
+        var sess=JSON.parse(saved);
+        if(sess.expires>Date.now()){
+          var cl=clients.find(function(c){return c.id===sess.id;});
+          if(cl){document.getElementById('login-screen').style.display='none';isAdmin=false;currentClient=cl;startApp(cl.name);return;}
+        }
+        localStorage.removeItem('client_session');
+      }catch(e){localStorage.removeItem('client_session');}
+    }
     document.getElementById('app').style.display='none';
     document.getElementById('login-screen').style.display='flex';
     return;
   }
   // Firebase session — validate it is the authorised admin
+  // Check 12h expiry
+  var adminTs=localStorage.getItem('admin_login_ts');
+  if(adminTs&&Date.now()-Number(adminTs)>ADMIN_SESSION_HOURS*60*60*1000){
+    localStorage.removeItem('admin_login_ts');
+    await _auth.signOut();return;
+  }
   if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     document.getElementById('admin-login-err').textContent='This account is not authorised as admin.';
     switchLoginTab('admin');
@@ -685,6 +718,8 @@ function startApp(role){
 }
 async function logout(){
   var wasAdmin=isAdmin;
+  localStorage.removeItem('client_session');
+  localStorage.removeItem('admin_login_ts');
   isAdmin=false;currentClient=null;fCat='';fSubcat='';fBrand='';fSize='';fStock='';fTag='';
   document.getElementById('app').style.display='none';
   document.getElementById('client-pw-input').value='';
@@ -700,7 +735,10 @@ function logAccess(name){
   var now=new Date();function p(n){return String(n).padStart(2,'0');}
   var ts=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes())+':'+p(now.getSeconds());
   accessLogs.unshift({name:name,ts:ts});if(accessLogs.length>200)accessLogs=accessLogs.slice(0,200);
-  saveConfig().catch(function(e){console.warn('logAccess save failed',e);});
+  // Delay log save slightly to ensure loadAppData has fully populated all arrays first
+  setTimeout(function(){
+    if(isAdmin&&_appReady){saveConfig().catch(function(e){console.warn('logAccess save failed',e);});}
+  },500);
 }
 
 function toggleMobileSidebar(){document.getElementById('sidebar').classList.toggle('mobile-open');}
